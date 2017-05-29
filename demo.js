@@ -4,7 +4,7 @@ const createCluster = require('./')
 const getContext = require('get-canvas-context')
 const panZoom = require('pan-zoom')
 const createLoop = require('canvas-loop')
-const fps = require('fps-indicator')()
+const createFps = require('fps-indicator')
 
 
 //data points
@@ -15,7 +15,7 @@ let points = Array(N*2).fill(null).map(_ => [Math.random(), Math.random()])
 //create cluster
 let cluster = createCluster(points)
 
-
+console.log(cluster)
 
 //rendering loop
 let scale = 1, offset = [0, 0]
@@ -35,6 +35,11 @@ app.on('tick', dt => {
 app.on('resize', _ => {
 })
 
+
+let fps = createFps()
+fps.element.style.fontFamily = `sans-serif`
+fps.element.style.top = `1rem`
+fps.element.style.right = `1rem`
 
 //interactions
 panZoom(canvas, e => {
