@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "canvas-loop": "^1.0.7",
+    "fps-indicator": "^1.0.2",
     "get-canvas-context": "^1.0.2",
     "pan-zoom": "^2.0.0"
   }
