@@ -1,22 +1,17 @@
 {
-  "name": "supercluster",
-  "version": "2.3.0",
-  "description": "A crazy fast geospatial point clustering library.",
+  "name": "point-cluster",
+  "version": "1.0.0",
+  "description": "A crazy fast point clustering library, supercluster for 2d points.",
   "main": "index.js",
   "scripts": {
-    "pretest": "eslint index.js bench.js test/test.js",
-    "test": "tap test",
-    "cov": "tap test --cov",
-    "build-dev": "mkdirp dist && browserify -d index.js -s supercluster > dist/supercluster.js",
-    "build-min": "mkdirp dist && browserify index.js -s supercluster | uglifyjs -c warnings=false -m > dist/supercluster.min.js",
-    "prepublish": "npm run build-dev && npm run build-min"
+    "test": "node test"
   },
   "files": [
     "dist"
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/mapbox/supercluster.git"
+    "url": "git://github.com/dfcreative/point-cluster.git"
   },
   "keywords": [
     "clustering",
@@ -24,22 +19,17 @@
     "markers"
   ],
   "author": "Vladimir Agafonkin",
+  "contributors": [
+    "Dima Yv"
+  ],
   "license": "ISC",
   "dependencies": {
-    "kdbush": "^1.0.1"
+    "kdbush": "^1.0.1",
+    "object-assign": "^4.1.1"
   },
   "devDependencies": {
-    "browserify": "^14.0.0",
-    "eslint": "^3.15.0",
-    "eslint-config-mourner": "^2.0.1",
-    "mkdirp": "^0.5.1",
-    "tap": "^10.0.2",
-    "uglifyjs": "^2.4.10"
-  },
-  "eslintConfig": {
-    "extends": "mourner",
-    "rules": {
-      "camelcase": 0
-    }
+    "canvas-loop": "^1.0.7",
+    "get-canvas-context": "^1.0.2",
+    "pan-zoom": "^2.0.0"
   }
 }

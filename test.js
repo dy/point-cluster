@@ -1,27 +1,27 @@
 'use strict';
 
 var test = require('tap').test;
-var supercluster = require('../');
+var cluster = require('../');
 
 var places = require('./fixtures/places.json');
 var placesTile = require('./fixtures/places-z0-0-0.json');
 
 test('generates clusters properly', function (t) {
-    var index = supercluster().load(places.features);
+    var index = cluster(places.features);
     var tile = index.getTile(0, 0, 0);
     t.same(tile.features, placesTile.features);
     t.end();
 });
 
 test('returns children of a cluster', function (t) {
-    var index = supercluster().load(places.features);
+    var index = cluster().load(places.features);
     var childCounts = index.getChildren(0, 0).map((p) => p.properties.point_count || 1);
     t.same(childCounts, [6, 7, 2, 1]);
     t.end();
 });
 
 test('returns leaves of a cluster', function (t) {
-    var index = supercluster().load(places.features);
+    var index = cluster().load(places.features);
     var leafNames = index.getLeaves(0, 0, 10, 5).map((p) => p.properties.name);
     t.same(leafNames, [
         'Niagara Falls',
@@ -39,23 +39,11 @@ test('returns leaves of a cluster', function (t) {
 });
 
 test('returns cluster expansion zoom', function (t) {
-    var index = supercluster().load(places.features);
+    var index = cluster().load(places.features);
     t.same(index.getClusterExpansionZoom(0, 0), 1);
     t.same(index.getClusterExpansionZoom(1, 0), 1);
     t.same(index.getClusterExpansionZoom(11, 0), 2);
     t.same(index.getClusterExpansionZoom(26, 0), 2);
     t.same(index.getClusterExpansionZoom(58, 0), 3);
-    t.end();
-});
-
-test('aggregates cluster properties with reduce', function (t) {
-    var index = supercluster({
-        initial: function () { return {sum: 0}; },
-        map: function (props) { return {sum: props.scalerank}; },
-        reduce: function (a, b) { a.sum += b.sum; }
-    }).load(places.features);
-
-    t.equal(index.getTile(0, 0, 0).features[0].tags.sum, 69);
-
     t.end();
 });
