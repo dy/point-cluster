@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node test",
-    "build": "browserify demo.js -g bubleify | indexhtmlify | metadataify > demo/index.html"
+    "build": "browserify demo.js -g bubleify | indexhtmlify | metadataify | github-cornerify > demo/index.html"
   },
   "files": [
     "dist"
