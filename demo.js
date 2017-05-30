@@ -9,7 +9,7 @@ const random = require('random-normal')
 
 //data points
 let N = 1e6
-let points = Array(N*2).fill(null).map(_ => [random(), random()])
+let points = Array(N*2).fill(null).map(_ => [random({mean: 0}), random({mean: 0})])
 
 function generate () {
 
@@ -42,13 +42,14 @@ app.on('resize', _ => {
 })
 
 //set zoom params
-let scale = canvas.width, offset = [-.5, -.5]
+let scale = 100, offset = [4, 4]
 let dirty = true
 
 let fps = createFps()
 fps.element.style.fontFamily = `sans-serif`
-fps.element.style.top = `1rem`
+fps.element.style.bottom = `1rem`
 fps.element.style.right = `1rem`
+fps.element.style.top = `auto`
 
 function toPx(v) {
 	return v * scale
@@ -100,10 +101,10 @@ function render () {
 	let diameter = 10
 	let opacity = .75
 
-	let totalPoints = 0
-	for (let i = 0; i < clusters.length; i++) {
-		totalPoints += clusters[i].numPoints
-	}
+	// let totalPoints = 0
+	// for (let i = 0; i < clusters.length; i++) {
+	// 	totalPoints += clusters[i].numPoints
+	// }
 
 	let radius = diameter*.5
 	for (let i = 0; i < clusters.length; i++) {
