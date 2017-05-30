@@ -17,7 +17,7 @@ let cluster = createCluster(points, {
 	minZoom: 0,
 	maxZoom: 16,
 	radius: 5,
-	nodeSize: 256
+	nodeSize: 64
 })
 
 
@@ -95,13 +95,14 @@ function render () {
 	ctx.clearRect(0,0,w,h)
 
 	let diameter = 10
+	let opacity = .75
 
 	for (let i = 0; i < clusters.length; i++) {
 		let cluster = clusters[i]
 		let x = cluster.x
 		let y = cluster.y
 
-		let opaque = Math.pow(.75, Math.min(10, cluster.numPoints))
+		let opaque = Math.pow((1 - opacity), Math.min(3, cluster.numPoints + 1))
 		ctx.fillStyle = `rgba(0,100,200,${(1 - opaque).toFixed(2)})`;
 
 		ctx.beginPath()
