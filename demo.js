@@ -8,15 +8,15 @@ const createFps = require('fps-indicator')
 
 
 //data points
-let N = 1e6
+let N = 1e5
 let points = Array(N*2).fill(null).map(_ => [Math.random(), Math.random()])
 
 
 //create cluster
 let cluster = createCluster(points, {
 	minZoom: 0,
-	maxZoom: 10,
-	radius: 7,
+	maxZoom: 16,
+	radius: 5,
 	nodeSize: 256
 })
 
@@ -47,22 +47,29 @@ fps.element.style.fontFamily = `sans-serif`
 fps.element.style.top = `1rem`
 fps.element.style.right = `1rem`
 
+function toPx(v) {
+	return v * scale
+}
+function fromPx(v, s) {
+	return v / s
+}
+
 //interactions
 panZoom(canvas, e => {
 	let w = canvas.width
 	let h = canvas.height
 
-	offset[0] += e.dx
-	offset[1] += e.dy
-
-	let rx = e.x / w
-	let ry = e.y / w
+	offset[0] += fromPx(e.dx, scale)
+	offset[1] += fromPx(e.dy, scale)
 
 	let prevScale = scale
 	scale -= scale * e.dz / w
 
-	offset[0] -= rx * (scale - prevScale)
-	offset[1] -= ry * (scale - prevScale)
+	let rx = e.x / w
+	let ry = e.y / h
+
+	offset[0] += fromPx(e.x, scale) - fromPx(e.x, prevScale)
+	offset[1] += fromPx(e.y, scale) - fromPx(e.y, prevScale)
 
 	dirty = true
 })
@@ -74,10 +81,10 @@ function render () {
 
 	let w = canvas.width
 	let h = canvas.height
-
 	let box = [
-		0,0,1,1
-		// offset[0] / w, offset[1] / w,
+		-offset[0], -offset[1],
+		fromPx(w, scale),
+		fromPx(h, scale)
 		// scale / w, scale / w
 	]
 
@@ -98,7 +105,7 @@ function render () {
 		ctx.fillStyle = `rgba(0,100,200,${(1 - opaque).toFixed(2)})`;
 
 		ctx.beginPath()
-		ctx.arc(x * scale + offset[0], y * scale + offset[1], diameter/2, 0, 2 * Math.PI)
+		ctx.arc(toPx(x + offset[0]), toPx(y + offset[1]), diameter/2, 0, 2 * Math.PI)
 		ctx.closePath()
 
 		ctx.fill();

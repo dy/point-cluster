@@ -49,7 +49,7 @@ PointCluster.prototype.load = function (points) {
 }
 
 PointCluster.prototype.getClusters = function (bbox, zoom) {
-    zoom = Math.round(zoom)
+    zoom = Math.floor(zoom)
     var tree = this.trees[clamp(zoom, this.options.minZoom, this.options.maxZoom + 1)];
     var ids = tree.range(bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]);
     var clusters = [];
