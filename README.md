@@ -46,3 +46,8 @@ and `offset` is the amount of points to skip (for pagination).
 #### `index.getClusterExpansionZoom(clusterId, clusterZoom)`
 
 Returns the zoom on which the cluster expands into several children (useful for "click to zoom" feature), given the cluster's `cluster_id` and zoom.
+
+
+### Related
+
+* [snap-points-2d](https://github.com/gl-vis/snap-points-2d)

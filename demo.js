@@ -5,19 +5,22 @@ const getContext = require('get-canvas-context')
 const panZoom = require('pan-zoom')
 const createLoop = require('canvas-loop')
 const createFps = require('fps-indicator')
-
+const random = require('random-normal')
 
 //data points
-let N = 1e5
-let points = Array(N*2).fill(null).map(_ => [Math.random(), Math.random()])
+let N = 1e6
+let points = Array(N*2).fill(null).map(_ => [random(), random()])
 
+function generate () {
+
+}
 
 //create cluster
 let cluster = createCluster(points, {
 	minZoom: 0,
-	maxZoom: 16,
-	radius: 5,
-	nodeSize: 64
+	maxZoom: 13,
+	radius: 4,
+	nodeSize: 256
 })
 
 
@@ -39,7 +42,7 @@ app.on('resize', _ => {
 })
 
 //set zoom params
-let scale = canvas.width, offset = [0, 0]
+let scale = canvas.width, offset = [-.5, -.5]
 let dirty = true
 
 let fps = createFps()
@@ -88,7 +91,7 @@ function render () {
 		// scale / w, scale / w
 	]
 
-	let zoom = Math.log2(scale)
+	let zoom = Math.floor(Math.log2(scale))
 	let clusters = cluster.getClusters(box, zoom)
 
 	if (clusters.length > 1e5) throw 'Too many clusters: ' + clusters.length
@@ -97,16 +100,22 @@ function render () {
 	let diameter = 10
 	let opacity = .75
 
+	let totalPoints = 0
+	for (let i = 0; i < clusters.length; i++) {
+		totalPoints += clusters[i].numPoints
+	}
+
+	let radius = diameter*.5
 	for (let i = 0; i < clusters.length; i++) {
 		let cluster = clusters[i]
 		let x = cluster.x
 		let y = cluster.y
 
-		let opaque = Math.pow((1 - opacity), Math.min(3, cluster.numPoints + 1))
+		let opaque = Math.pow((1 - opacity), Math.min(4, cluster.numPoints + 1))
 		ctx.fillStyle = `rgba(0,100,200,${(1 - opaque).toFixed(2)})`;
 
 		ctx.beginPath()
-		ctx.arc(toPx(x + offset[0]), toPx(y + offset[1]), diameter/2, 0, 2 * Math.PI)
+		ctx.arc(toPx(x + offset[0]), toPx(y + offset[1]), radius, 0, 2 * Math.PI)
 		ctx.closePath()
 
 		ctx.fill();

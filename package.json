@@ -33,6 +33,7 @@
     "fps-indicator": "^1.0.2",
     "get-canvas-context": "^1.0.2",
     "pan-zoom": "^2.0.0",
+    "random-normal": "^1.0.0",
     "settings-panel": "^1.8.17"
   }
 }
