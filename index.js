@@ -2,6 +2,7 @@
 
 var kdbush = require('kdbush');
 var extend = require('object-assign');
+var clamp = require('clamp')
 
 module.exports = PointCluster;
 
@@ -17,19 +18,13 @@ function PointCluster(points, options) {
 PointCluster.prototype.options = {
     minZoom: 0,   // min zoom to generate clusters on
     maxZoom: 16,  // max zoom level to cluster the points on
-    radius: 40,   // cluster radius in pixels
-    extent: 512,  // tile extent (radius is calculated relative to it)
-    nodeSize: 64, // size of the KD-tree leaf node, affects performance
-    log: false   // whether to log timing info
+    radius: 0.1,   // cluster radius in pixels
+    nodeSize: 64 // size of the KD-tree leaf node, affects performance
 }
 
 PointCluster.prototype.load = function (points) {
-    var timerId = 'prepare ' + points.length + ' points';
-
-    this.points = points;
-
     // generate a cluster object for each point and index input points into a KD-tree
-    var clusters = Array(points.length)
+    var clusters = this.points = Array(points.length)
     for (var i = 0, l = points.length; i < l; i++) {
         clusters[i] = {
             x: points[i][0], // projected point coordinates
@@ -54,8 +49,9 @@ PointCluster.prototype.load = function (points) {
 }
 
 PointCluster.prototype.getClusters = function (bbox, zoom) {
-    var tree = this.trees[this._limitZoom(zoom)];
-    var ids = tree.range(bbox[0], bbox[3], bbox[2], bbox[1]);
+    zoom = Math.round(zoom)
+    var tree = this.trees[clamp(zoom, this.options.minZoom, this.options.maxZoom + 1)];
+    var ids = tree.range(bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]);
     var clusters = [];
     for (var i = 0; i < ids.length; i++) {
         var c = tree.points[ids[i]];
@@ -68,7 +64,7 @@ PointCluster.prototype.getClusters = function (bbox, zoom) {
 
 PointCluster.prototype.getChildren = function (clusterId, clusterZoom) {
     var origin = this.trees[clusterZoom + 1].points[clusterId];
-    var r = this.options.radius / (this.options.extent * Math.pow(2, clusterZoom));
+    var r = this.options.radius / Math.pow(2, clusterZoom);
     var ids = this.trees[clusterZoom + 1].within(origin.x, origin.y, r);
     var children = [];
     for (var i = 0; i < ids.length; i++) {
@@ -131,13 +127,9 @@ PointCluster.prototype._appendLeaves = function (result, clusterId, clusterZoom,
     return skipped;
 }
 
-PointCluster.prototype._limitZoom = function (z) {
-    return Math.max(this.options.minZoom, Math.min(z, this.options.maxZoom + 1));
-}
-
 PointCluster.prototype._cluster = function (points, zoom) {
     var clusters = [];
-    var r = this.options.radius / (this.options.extent * Math.pow(2, zoom));
+    var r = this.options.radius / Math.pow(2, zoom);
 
     // loop through each point
     for (var i = 0; i < points.length; i++) {

@@ -25,12 +25,14 @@
   "license": "ISC",
   "dependencies": {
     "kdbush": "^1.0.1",
+    "clamp": "^1.0.1",
     "object-assign": "^4.1.1"
   },
   "devDependencies": {
     "canvas-loop": "^1.0.7",
     "fps-indicator": "^1.0.2",
     "get-canvas-context": "^1.0.2",
-    "pan-zoom": "^2.0.0"
+    "pan-zoom": "^2.0.0",
+    "settings-panel": "^1.8.17"
   }
 }

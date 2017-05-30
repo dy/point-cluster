@@ -8,17 +8,20 @@ const createFps = require('fps-indicator')
 
 
 //data points
-let N = 1e3
+let N = 1e6
 let points = Array(N*2).fill(null).map(_ => [Math.random(), Math.random()])
 
 
 //create cluster
-let cluster = createCluster(points)
+let cluster = createCluster(points, {
+	minZoom: 0,
+	maxZoom: 10,
+	radius: 7,
+	nodeSize: 256
+})
 
-console.log(cluster)
 
 //rendering loop
-let scale = 1, offset = [0, 0]
 
 let ctx = getContext('2d')
 let canvas = ctx.canvas
@@ -35,6 +38,9 @@ app.on('tick', dt => {
 app.on('resize', _ => {
 })
 
+//set zoom params
+let scale = canvas.width, offset = [0, 0]
+let dirty = true
 
 let fps = createFps()
 fps.element.style.fontFamily = `sans-serif`
@@ -53,33 +59,67 @@ panZoom(canvas, e => {
 	let ry = e.y / w
 
 	let prevScale = scale
-	scale -= scale * e.dz / 1e3
+	scale -= scale * e.dz / w
 
-	offset[0] -= rx * w * (scale - prevScale)
-	offset[1] -= ry * w * (scale - prevScale)
+	offset[0] -= rx * (scale - prevScale)
+	offset[1] -= ry * (scale - prevScale)
+
+	dirty = true
 })
 
 
 function render () {
+	if (!dirty) return
+	dirty = false
+
 	let w = canvas.width
 	let h = canvas.height
 
+	let box = [
+		0,0,1,1
+		// offset[0] / w, offset[1] / w,
+		// scale / w, scale / w
+	]
+
+	let zoom = Math.log2(scale)
+	let clusters = cluster.getClusters(box, zoom)
+
+	if (clusters.length > 1e5) throw 'Too many clusters: ' + clusters.length
 	ctx.clearRect(0,0,w,h)
 
-	ctx.fillStyle = 'rgba(0,100,200,.75)';
 	let diameter = 10
 
-	for (let i = 0; i < N; i++) {
-		let x = points[i][0]
-		let y = points[i][1]
+	for (let i = 0; i < clusters.length; i++) {
+		let cluster = clusters[i]
+		let x = cluster.x
+		let y = cluster.y
+
+		let opaque = Math.pow(.75, Math.min(10, cluster.numPoints))
+		ctx.fillStyle = `rgba(0,100,200,${(1 - opaque).toFixed(2)})`;
 
 		ctx.beginPath()
-		ctx.arc(x * w * scale + offset[0], y * h * scale + offset[1], diameter/2, 0, 2 * Math.PI)
+		ctx.arc(x * scale + offset[0], y * scale + offset[1], diameter/2, 0, 2 * Math.PI)
 		ctx.closePath()
 
 		ctx.fill();
 	}
 
+
+	//render initial points
+	// ctx.fillStyle = 'rgba(0,200,100,.5)';
+	// let pd = 2
+
+	// for (let i = 0; i < points.length; i++) {
+	// 	let point = points[i]
+	// 	let x = point[0]
+	// 	let y = point[1]
+
+	// 	ctx.beginPath()
+	// 	ctx.arc(x * scale + offset[0], y * scale + offset[1], pd/2, 0, 2 * Math.PI)
+	// 	ctx.closePath()
+
+	// 	ctx.fill();
+	// }
 }
 
 

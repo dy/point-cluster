@@ -24,15 +24,14 @@ Loads an array `points` of `[[x, y], [x, y], ...]` form. Once loaded, index is i
 |----------|---------|-------------------------------------------------------------------|
 | minZoom  | 0       | Minimum zoom level at which clusters are generated.               |
 | maxZoom  | 16      | Maximum zoom level at which clusters are generated.               |
-| radius   | 40      | Cluster radius, in pixels.                                        |
-| extent   | 512     | (Tiles) Tile extent. Radius is calculated relative to this value. |
+| radius   | 0.1      | Cluster radius, in pixels.                                        |
 | nodeSize | 64      | Size of the KD-tree leaf node. Affects performance.               |
 | log      | false   | Whether timing info should be logged.                             |
 
 
-#### `index.getClusters(bbox, zoom)`
+#### `index.getClusters(rect, zoom)`
 
-For the given `bbox` array (`[westLng, southLat, eastLng, northLat]`) and integer `zoom`, returns an array of clusters and points `[x, y, w]` objects.
+For the given `rect` array (`[left, top, width, height]`) and integer `zoom`, returns an array of clusters and points `{x, y, numPoints}` objects. The `rect`coordinates are relative of data, `zoom` reflects 2<sup>zoom</sup> number of points per pixel.
 
 #### `index.getChildren(clusterId, clusterZoom)`
 
