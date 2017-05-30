@@ -4,7 +4,8 @@
   "description": "A crazy fast point clustering library, supercluster for 2d points.",
   "main": "index.js",
   "scripts": {
-    "test": "node test"
+    "test": "node test",
+    "build": "browserify demo.js -g bubleify | indexhtmlify | metadataify > demo/index.html"
   },
   "files": [
     "dist"
