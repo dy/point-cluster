@@ -105,15 +105,15 @@ function render () {
 	// for (let i = 0; i < clusters.length; i++) {
 	// 	totalPoints += clusters[i].numPoints
 	// }
-
+	ctx.fillStyle = 'rgba(0,100,200,1)'
 	let radius = diameter*.5
 	for (let i = 0; i < clusters.length; i++) {
 		let cluster = clusters[i]
 		let x = cluster.x
 		let y = cluster.y
 
-		let opaque = Math.pow((1 - opacity), Math.min(4, cluster.numPoints + 1))
-		ctx.fillStyle = `rgba(0,100,200,${(1 - opaque).toFixed(2)})`;
+		// let opaque = Math.pow((1 - opacity), Math.min(4, cluster.numPoints + 1))
+		// ctx.fillStyle = `rgba(0,100,200,${(1 - opaque).toFixed(2)})`;
 
 		ctx.beginPath()
 		ctx.arc(toPx(x + offset[0]), toPx(y + offset[1]), radius, 0, 2 * Math.PI)

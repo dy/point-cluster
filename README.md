@@ -1,6 +1,6 @@
-# point-cluster [![Simply Awesome](https://img.shields.io/badge/simply-awesome-brightgreen.svg)](https://github.com/mourner/projects) [![Build Status](https://travis-ci.org/dfcreative/point-cluster.svg?branch=master)](https://travis-ci.org/dfcreative/point-cluster)
+# point-cluster [![Build Status](https://travis-ci.org/dfcreative/point-cluster.svg?branch=master)](https://travis-ci.org/dfcreative/point-cluster)
 
-A very fast JavaScript library for point clustering for browsers and Node.
+Very fast point clustering for browsers and Node.
 
 ```js
 var pointCluster = require('point-cluster')
@@ -29,25 +29,8 @@ Loads an array `points` of `[[x, y], [x, y], ...]` form. Once loaded, index is i
 | log      | false   | Whether timing info should be logged.                             |
 
 
-#### `index.getClusters(rect, zoom)`
-
-For the given `rect` array (`[left, top, width, height]`) and integer `zoom`, returns an array of clusters and points `{x, y, numPoints}` objects. The `rect`coordinates are relative of data, `zoom` reflects 2<sup>zoom</sup> number of points per pixel.
-
-#### `index.getChildren(clusterId, clusterZoom)`
-
-Returns the children of a cluster (on the next zoom level) given its id (`cluster_id` value from feature properties) and zoom the cluster was from.
-
-#### `index.getLeaves(clusterId, clusterZoom, limit = 10, offset = 0)`
-
-Returns all the points of a cluster (given its `cluster_id` and zoom), with pagination support:
-`limit` is the number of points to return (set to `Infinity` for all points),
-and `offset` is the amount of points to skip (for pagination).
-
-#### `index.getClusterExpansionZoom(clusterId, clusterZoom)`
-
-Returns the zoom on which the cluster expands into several children (useful for "click to zoom" feature), given the cluster's `cluster_id` and zoom.
-
 
 ### Related
 
-* [snap-points-2d](https://github.com/gl-vis/snap-points-2d)
+* [snap-points-2d](https://github.com/gl-vis/snap-points-2d) — grouping points by pixels
+* [kdgrass](https://github.com/dfcreative/kdgrass) — minimal kd-tree implementation

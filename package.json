@@ -1,7 +1,7 @@
 {
   "name": "point-cluster",
   "version": "1.0.0",
-  "description": "A crazy fast point clustering library, supercluster for 2d points.",
+  "description": "Fast 2d point clustering.",
   "main": "index.js",
   "scripts": {
     "test": "node test",
@@ -19,15 +19,13 @@
     "geospatial",
     "markers"
   ],
-  "author": "Vladimir Agafonkin",
-  "contributors": [
-    "Dima Yv"
-  ],
+  "author": "Dima Yv",
   "license": "ISC",
   "dependencies": {
-    "kdbush": "^1.0.1",
     "clamp": "^1.0.1",
-    "object-assign": "^4.1.1"
+    "kdgrass": "^1.0.0",
+    "object-assign": "^4.1.1",
+    "snap-points-2d": "^3.1.0"
   },
   "devDependencies": {
     "canvas-loop": "^1.0.7",
@@ -35,6 +33,7 @@
     "get-canvas-context": "^1.0.2",
     "pan-zoom": "^2.0.0",
     "random-normal": "^1.0.0",
-    "settings-panel": "^1.8.17"
+    "settings-panel": "^1.8.17",
+    "tape": "^4.6.3"
   }
 }
