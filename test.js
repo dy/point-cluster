@@ -19,3 +19,5 @@ test('huge number of points', t => {
     console.log(cluster.getPoints(1.4).length)
     console.timeEnd('r=1')
 })
+
+let positions = [0,0, 1,1, -1,-1, 1,-1, -1,1, 0,1, 0,-1, 1,0, -1,0]

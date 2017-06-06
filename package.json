@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node test",
-    "build": "browserify demo.js -g bubleify | indexhtmlify | metadataify | github-cornerify > demo/index.html"
+    "build": "browserify demo.js -g bubleify | indexhtmlify | metadataify | github-cornerify > demo/index.html",
+    "build2": "browserify test.js -g bubleify | indexhtmlify | metadataify | github-cornerify > demo/colors.html"
   },
   "files": [
     "dist"
@@ -22,14 +23,15 @@
   "author": "Dima Yv",
   "license": "ISC",
   "dependencies": {
+    "array-bounds": "^1.0.0",
     "clamp": "^1.0.1",
-    "kdgrass": "^1.0.0",
+    "kdgrass": "^1.0.1",
     "object-assign": "^4.1.1",
     "snap-points-2d": "^3.1.0"
   },
   "devDependencies": {
     "canvas-loop": "^1.0.7",
-    "fps-indicator": "^1.0.2",
+    "fps-indicator": "^1.1.0",
     "get-canvas-context": "^1.0.2",
     "pan-zoom": "^2.0.0",
     "random-normal": "^1.0.0",
