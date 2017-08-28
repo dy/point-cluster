@@ -30,19 +30,18 @@ function pointCluster(points, options) {
 	for (let i = 0; i < count; i++) {
 		ids[i] = i
 	}
-	let levels = new Uint32Array(count)
-
 
 	//create tree
 	let root = {
 		id: 0,
+		depth: 0,
 		parent: null,
 		start: 0,
 		end: count,
-		children: []
+		children: null,
+		last: true
 	}
 
-	let c = 0
 	let stack = [root]
 
 	while (stack.length) {
@@ -50,52 +49,107 @@ function pointCluster(points, options) {
 
 		let sections = redistribute(ids.subarray(node.start, node.end), points, node)
 
-		if (Array.isArray(sections)) {
-			for (let i = 0, offset = node.start; i < sections.length; i++) {
-				let subids = sections[i]
+		if (!sections.length) continue
 
-				if (!subids || !subids.length) {
-					continue;
-				}
+		let children = []
 
-				//unchanged subids means repeated point coords
-				if (subids.length === ids.length) {
-					continue;
-				}
+		for (let i = 0, offset = node.start; i < sections.length; i++) {
+			let subids = sections[i]
 
-				//write subids to ids
-				ids.set(subids, offset)
-
-				let end = offset + subids.length;
-
-				//create subgroup descriptor node
-				let subnode = {
-					id: i,
-					parent: node,
-					start: offset,
-					end: end,
-					children: []
-				}
-
-				offset = end
-
-				node.children.push(subnode)
-
+			if (!subids || !subids.length) {
+				continue;
 			}
+
+			//unchanged subids means repeated point coords, so ignore leaf
+			if (subids.length === ids.length) {
+				continue;
+			}
+
+			//write subids to ids
+			ids.set(subids, offset)
+
+			let end = offset + subids.length;
+
+			children.push({
+				id: i,
+				depth: node.depth + 1,
+				parent: node,
+				start: offset,
+				end: end,
+				children: null,
+				last: false
+			})
+
+			offset = end
 		}
+
+		if (!children.length) continue
+
+		node.children = children
+		node.children[node.children.length - 1].last = true
 
 		for (let i = 0; i < node.children.length; i++) {
 			let child = node.children[i]
 
-			//ignore small leafs
-			if ((child.end - child.start) > nodeSize) stack.push(child)
+			//divide big enough nodes
+			if ((child.end - child.start) > nodeSize) {
+				stack.push(child)
+			}
 		}
 	}
 
 	return {
 		tree: root,
 		id: ids,
-		lod: levels
+		levels: buildLevels
+	}
+
+	//TODO: build levels in proper fashion
+
+	//create list with ids ordered by scale levels
+	function buildLevels() {
+		let lod = new Uint32Array(count)
+		let offset = 0
+		let stack = [root]
+
+		lod[offset++] = ids[root.end - 1]
+
+		while (stack.length) {
+			let node = stack.shift()
+
+			if (!node.children) continue
+
+			//skip used points from the tail, that is number of last parent nodes
+			//TODO: There is probably easier z-curve method
+			let skip = 1, n = node
+			for (let d = node.depth; d--;) {
+				if (n.last) skip++
+				n = n.parent
+			}
+
+			//put kiddos' last points
+			for (let i = 0; i < node.children.length; i++) {
+				let child = node.children[i]
+				if (child.last) skip -= 1
+
+				if (child.children) {
+					lod[offset++] = ids[child.end - skip - 1]
+				}
+				else {
+					let subids = ids.subarray(child.start, child.end - skip)
+					lod.set(subids, offset)
+					offset += subids.length
+				}
+			}
+
+			//put next layer of children
+			for (let i = 0; i < node.children.length; i++) {
+				let child = node.children[i]
+				if (child.children) stack.push(node.children[i])
+			}
+		}
+
+		return lod
 	}
 }
 

@@ -35,11 +35,12 @@ let bounds = getBounds(pts, 2)
 console.time(1)
 let index = cluster(pts, {
 	divide: quadsection,
-	nodeSize:64
+	nodeSize: 32
 })
 console.timeEnd(1)
 
-// drawPoints({elements: index.id.slice(0,1e4)})
+// let lod = index.levels()
+// drawPoints({elements: lod.slice(0,5e3), color: 'rgba(0,0,0,.5)'})
 
 // console.time(2)
 // snap(pts)
@@ -49,8 +50,6 @@ console.timeEnd(1)
 function kdsection (ids, points, node) {
 
 }
-
-
 
 
 function quadsection (ids, points, node) {
@@ -77,6 +76,7 @@ function quadsection (ids, points, node) {
 		w * boxdim[0] / range[0],
 		h * boxdim[1] / range[1]
 	)
+
 	// ctx.fillStyle = 'rgba(0,0,127,.9)'
 	// ctx.textBaseline = 'bottom'
 	// ctx.fillText(
