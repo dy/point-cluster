@@ -12,13 +12,15 @@ module.exports = pointCluster
 
 
 //create index for the set of points based on divider method
-function pointCluster(points, redistribute) {
-	if (!redistribute) throw Error('Second argument should be a function or a string')
-	if (typeof redistribute === 'string') {
-		redistribute = types[redistribute]
+function pointCluster(points, options) {
+	// if (!redistribute) throw Error('Second argument should be a function or a string')
+	// if (typeof redistribute === 'string') {
+	// 	redistribute = types[redistribute]
 
-		if (!redistribute) throw Error('Unknown type of cluster: `' + redistribute + '`')
-	}
+	// 	if (!redistribute) throw Error('Unknown type of cluster: `' + redistribute + '`')
+	// }
+	let redistribute = options.divide
+	let nodeSize = options.nodeSize || 128
 
 	points = unroll(points)
 
@@ -28,6 +30,7 @@ function pointCluster(points, redistribute) {
 	for (let i = 0; i < count; i++) {
 		ids[i] = i
 	}
+	let levels = new Uint32Array(count)
 
 
 	//create tree
@@ -45,29 +48,25 @@ function pointCluster(points, redistribute) {
 	while (stack.length) {
 		let node = stack.shift()
 
-		divide(node)
-
-		for (let i = 0; i < node.children.length; i++) {
-			stack.push(node.children[i])
-		}
-	}
-
-	//process node
-	function divide(node) {
-		// c++
-		// if (c > 150) throw Error('Recursion')
 		let sections = redistribute(ids.subarray(node.start, node.end), points, node)
 
 		if (Array.isArray(sections)) {
 			for (let i = 0, offset = node.start; i < sections.length; i++) {
 				let subids = sections[i]
 
-				if (!subids || !subids.length) continue;
+				if (!subids || !subids.length) {
+					continue;
+				}
+
+				//unchanged subids means repeated point coords
+				if (subids.length === ids.length) {
+					continue;
+				}
+
+				//write subids to ids
+				ids.set(subids, offset)
 
 				let end = offset + subids.length;
-
-				//put new ids by the offset
-				ids.set(subids, offset)
 
 				//create subgroup descriptor node
 				let subnode = {
@@ -81,11 +80,23 @@ function pointCluster(points, redistribute) {
 				offset = end
 
 				node.children.push(subnode)
+
 			}
+		}
+
+		for (let i = 0; i < node.children.length; i++) {
+			let child = node.children[i]
+
+			//ignore small leafs
+			if ((child.end - child.start) > nodeSize) stack.push(child)
 		}
 	}
 
-	return root
+	return {
+		tree: root,
+		id: ids,
+		lod: levels
+	}
 }
 
 

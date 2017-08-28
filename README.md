@@ -23,9 +23,15 @@ index.getClusters([-180, -85, 180, 85], 2);
 
 ## API
 
-### `index = cluster(points, divide?|type?)`
+### `index = cluster(points, options?)`
 
-`points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` form. `divide` is a function with `(ids, points) => [group1, group2, ...]` signature: it takes list of point identifiers `ids` and expects to return all the ids redistributed by subgroups for sectioning. If no groups returned, the node will be considered final. Alternately `type` can pick one of existing clusters, such as `kd`, `quad`, `ann`.
+`points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` form.
+
+Option | Default | Description
+---|---|---
+`nodeSize` | `64` | Node size to stop splitting, may significantly increase performance.
+`divide` | `null` | Divisor with `(ids, points) => [group1, group2, ...]` signature. It takes list of point identifiers `ids` and expects to return all the ids redistributed by subgroups for sectioning. If no groups returned, the node will be considered final.
+
 
 ### `index.closest([x, y])`
 

@@ -15,7 +15,7 @@ for (let i = 0; i < N; i++) {
 	pts[i*2+1] = random()
 }
 
-const drawPoints = require('../regl-scatter2d')({color: 'rgba(0,0,0,.15)', size: 5, points: pts})
+const drawPoints = require('../regl-scatter2d')({color: 'rgba(0,0,255,.15)', size: 5, points: pts})
 
 
 //create canvas for rects
@@ -33,8 +33,13 @@ let bounds = getBounds(pts, 2)
 
 //cluster points
 console.time(1)
-let index = cluster(pts, quadsection)
+let index = cluster(pts, {
+	divide: quadsection,
+	nodeSize:64
+})
 console.timeEnd(1)
+
+// drawPoints({elements: index.id.slice(0,1e4)})
 
 // console.time(2)
 // snap(pts)
@@ -48,9 +53,6 @@ function kdsection (ids, points, node) {
 
 
 
-
-
-
 function quadsection (ids, points, node) {
 	let box
 
@@ -60,35 +62,28 @@ function quadsection (ids, points, node) {
 	}
 	//child box are parent box
 	else {
-		//ignore unchanged leafs
-		if (node.parent.end === node.end && node.parent.start === node.start) return
-
 		box = node.parent.childBox[node.id]
 	}
 
 
-	// debugger;
 	drawPoints({ids: ids})
 
-	//render rect
 	let boxdim = [box[2] - box[0], box[3] - box[1]]
 	let range = [bounds[2] - bounds[0], bounds[3] - bounds[1]]
-	ctx.fillStyle = 'rgba(0, 0, 0, .15)'
+	ctx.fillStyle = 'rgba(255, 0, 0, .15)'
 	ctx.fillRect(
 		w * ((box[0] - bounds[0]) / range[0]) || 0,
 		h - (h * ((box[1] - bounds[1]) / range[1]) || 0) - h * boxdim[1] / range[1],
 		w * boxdim[0] / range[0],
 		h * boxdim[1] / range[1]
 	)
-	ctx.fillStyle = 'rgba(0,0,127,.9)'
-	ctx.textBaseline = 'bottom'
+	// ctx.fillStyle = 'rgba(0,0,127,.9)'
+	// ctx.textBaseline = 'bottom'
 	// ctx.fillText(
 	// 	ids.length,//.toFixed(2),
 	// 	w * ((box[0] - bounds[0]) / range[0] || 0),
 	// 	h - h * ((box[1] - bounds[1]) / range[1] || 0)
 	// )
-
-	if (ids.length <= 16) return
 
 	let mid = [(box[2] + box[0]) * .5, (box[3] + box[1]) * .5]
 
