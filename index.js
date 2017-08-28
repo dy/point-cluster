@@ -29,6 +29,7 @@ function pointCluster(points, redistribute) {
 		ids[i] = i
 	}
 
+
 	//create tree
 	let root = {
 		id: 0,
@@ -39,13 +40,24 @@ function pointCluster(points, redistribute) {
 	}
 
 	let c = 0
-	divide(root)
+	let stack = [root]
+
+	while (stack.length) {
+		let node = stack.shift()
+
+		divide(node)
+
+		for (let i = 0; i < node.children.length; i++) {
+			stack.push(node.children[i])
+		}
+	}
 
 	//process node
 	function divide(node) {
-		c++
-		if (c > 10) throw Error('Recursion')
+		// c++
+		// if (c > 150) throw Error('Recursion')
 		let sections = redistribute(ids.subarray(node.start, node.end), points, node)
+
 		if (Array.isArray(sections)) {
 			for (let i = 0, offset = node.start; i < sections.length; i++) {
 				let subids = sections[i]
@@ -69,12 +81,6 @@ function pointCluster(points, redistribute) {
 				offset = end
 
 				node.children.push(subnode)
-			}
-
-			for (let i = 0, l = node.children.length; i < l; i++) {
-				let subnode = node.children[i]
-
-				divide(subnode)
 			}
 		}
 	}

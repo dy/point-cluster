@@ -22,9 +22,9 @@
   ],
   "author": "Dima Yv",
   "license": "ISC",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
-    "gauss-random": "^1.0.1"
+    "gauss-random": "^1.0.1",
+    "snap-points-2d": "^3.2.0"
   }
 }
