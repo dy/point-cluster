@@ -1,143 +1,123 @@
 'use strict'
 
-const createCluster = require('./')
-const getContext = require('get-canvas-context')
-const panZoom = require('pan-zoom')
-const createLoop = require('canvas-loop')
-const createFps = require('fps-indicator')
-const random = require('random-normal')
+const cluster = require('./')
+const random = require('gauss-random')
+const getBounds = require('array-bounds')
+const fit = require('canvas-fit')
 
-//data points
-let N = 1e6
-let points = Array(N*2).fill(null).map(_ => [random({mean: 0}), random({mean: 0})])
 
-function generate () {
+//render points
+let N = 1e3
+let pts = Array(N*2)
 
+for (let i = 0; i < N; i++) {
+	pts[i*2] = random()
+	pts[i*2+1] = random()
 }
 
-//create cluster
-let cluster = createCluster(points, {
-	minZoom: 0,
-	maxZoom: 13,
-	radius: 4,
-	nodeSize: 256
-})
+const drawPoints = require('../regl-scatter2d')({color: 'rgba(0,0,0,.15)', size: 5, points: pts})
 
 
-//rendering loop
+//create canvas for rects
+let canvas = document.body.appendChild(document.createElement('canvas'))
+let ctx = canvas.getContext('2d')
 
-let ctx = getContext('2d')
-let canvas = ctx.canvas
-document.body.appendChild(canvas)
+fit(canvas)
 
-let app = createLoop(canvas)
+let w = canvas.width;
+let h = canvas.height;
 
-app.start()
-
-app.on('tick', dt => {
-	render()
-})
-
-app.on('resize', _ => {
-})
-
-//set zoom params
-let scale = 100, offset = [4, 4]
-let dirty = true
-
-let fps = createFps()
-fps.element.style.fontFamily = `sans-serif`
-fps.element.style.bottom = `1rem`
-fps.element.style.right = `1rem`
-fps.element.style.top = `auto`
-
-function toPx(v) {
-	return v * scale
-}
-function fromPx(v, s) {
-	return v / s
-}
-
-//interactions
-panZoom(canvas, e => {
-	let w = canvas.width
-	let h = canvas.height
-
-	offset[0] += fromPx(e.dx, scale)
-	offset[1] += fromPx(e.dy, scale)
-
-	let prevScale = scale
-	scale -= scale * e.dz / w
-
-	let rx = e.x / w
-	let ry = e.y / h
-
-	offset[0] += fromPx(e.x, scale) - fromPx(e.x, prevScale)
-	offset[1] += fromPx(e.y, scale) - fromPx(e.y, prevScale)
-
-	dirty = true
-})
+let bounds = getBounds(pts, 2)
 
 
-function render () {
-	if (!dirty) return
-	dirty = false
 
-	let w = canvas.width
-	let h = canvas.height
-	let box = [
-		-offset[0], -offset[1],
-		fromPx(w, scale),
-		fromPx(h, scale)
-		// scale / w, scale / w
-	]
+//cluster points
+let index = cluster(pts, quadsection)
 
-	let zoom = Math.floor(Math.log2(scale))
-	let clusters = cluster.getClusters(box, zoom)
+function quadsection (ids, points, node) {
+	if (ids.length <= 1) return
 
-	if (clusters.length > 1e5) throw 'Too many clusters: ' + clusters.length
-	ctx.clearRect(0,0,w,h)
+	let box
 
-	let diameter = 10
-	let opacity = .75
-
-	// let totalPoints = 0
-	// for (let i = 0; i < clusters.length; i++) {
-	// 	totalPoints += clusters[i].numPoints
-	// }
-	ctx.fillStyle = 'rgba(0,100,200,1)'
-	let radius = diameter*.5
-	for (let i = 0; i < clusters.length; i++) {
-		let cluster = clusters[i]
-		let x = cluster.x
-		let y = cluster.y
-
-		// let opaque = Math.pow((1 - opacity), Math.min(4, cluster.numPoints + 1))
-		// ctx.fillStyle = `rgba(0,100,200,${(1 - opaque).toFixed(2)})`;
-
-		ctx.beginPath()
-		ctx.arc(toPx(x + offset[0]), toPx(y + offset[1]), radius, 0, 2 * Math.PI)
-		ctx.closePath()
-
-		ctx.fill();
+	//parent box are data box
+	if (!node.parent) {
+		box = getBounds(points, 2)
+	}
+	//child box are parent box
+	else {
+		box = node.parent.childBox[node.id]
 	}
 
+	// debugger;
 
-	//render initial points
-	// ctx.fillStyle = 'rgba(0,200,100,.5)';
-	// let pd = 2
+	drawPoints({ids: ids})
 
-	// for (let i = 0; i < points.length; i++) {
-	// 	let point = points[i]
-	// 	let x = point[0]
-	// 	let y = point[1]
+	//render rect
+	let boxdim = [box[2] - box[0], box[3] - box[1]]
+	let range = [bounds[2] - bounds[0], bounds[3] - bounds[1]]
+	ctx.strokeStyle = 'rgba(127, 0, 0, .5)'
+	ctx.fillStyle = 'rgba(127, 0, 0, .15)'
+	ctx.fillRect(
+		w * ((box[0] - bounds[0]) / range[0]) || 0,
+		h - (h * ((box[1] - bounds[1]) / range[1]) || 0) - h * boxdim[1] / range[1],
+		w * boxdim[0] / range[0],
+		h * boxdim[1] / range[1]
+	)
+	ctx.fillStyle = 'rgba(0,0,127,.9)'
+	ctx.textBaseline = 'bottom'
+	ctx.fillText(
+		ids.length,//.toFixed(2),
+		w * ((box[0] - bounds[0]) / range[0] || 0),
+		h - h * ((box[1] - bounds[1]) / range[1] || 0)
+	)
 
-	// 	ctx.beginPath()
-	// 	ctx.arc(x * scale + offset[0], y * scale + offset[1], pd/2, 0, 2 * Math.PI)
-	// 	ctx.closePath()
+	let mid = [(box[2] + box[0]) * .5, (box[3] + box[1]) * .5]
 
-	// 	ctx.fill();
-	// }
+	node.childBox = [
+		[box[0], box[1], mid[0], mid[1]],
+		[mid[0], box[1], box[2], mid[1]],
+		[box[0], mid[1], mid[0], box[3]],
+		[mid[0], mid[1], box[2], box[3]]
+	]
+
+	//collect tl/tr/bl/br parts
+	return [
+		collectPointsInRect(ids, points, node.childBox[0]),
+		collectPointsInRect(ids, points, node.childBox[1]),
+		collectPointsInRect(ids, points, node.childBox[2]),
+		collectPointsInRect(ids, points, node.childBox[3])
+	]
+}
+
+function collectPointsInRect (ids, points, rect) {
+	let result = []
+
+	for (let i = 0, l = ids.length; i < l; i++) {
+		let id = ids[i]
+		let x = points[id * 2]
+		let y = points[id * 2 + 1]
+
+		//TODO: replace with proper module
+		if (pointInRect(x, y, rect)) {
+			result.push(id)
+		}
+	}
+
+	return result
+}
+
+function pointInRect (x, y, rect) {
+	return (x >= rect[0] && y >= rect[1] && x <= rect[2] && y <= rect[3])
 }
 
 
+
+
+
+//render lines
+// ctx.beginPath()
+// ctx.moveTo(0, h/2)
+// ctx.lineTo(w, h/2)
+// ctx.strokeStyle = 'black'
+// ctx.lineWidth = 1
+// ctx.stroke()

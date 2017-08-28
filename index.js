@@ -4,143 +4,98 @@
 
 'use strict';
 
-var kdtree = require('kdgrass');
-var extend = require('object-assign');
-var clamp = require('clamp')
-var getBounds = require('array-bounds')
-var snap = require('snap-points-2d')
 
-module.exports = pointCluster;
+const types = require('./types')
 
 
-function pointCluster(points) {
-    var tree = kdtree(points, 1)
-    var dataBounds = getBounds(points, 2)
-
-    return cluster
-
-    //returns points belonging to certain scale (that is kdtree level)
-    function cluster (dist, bounds) {
-        if (!bounds) bounds = dataBounds
-
-        var result = []
-        var r = dist/2, r2 = r*r, pr2 = Math.PI * r2
-        var box = dataBounds.slice()
-
-        let maxDepth = 25
-        getPoints(tree, 0, tree.ids.length - 1, 0, box, 0)
-
-        function getPoints(tree, from, to, axis, box, depth) {
-            var coords = tree.coords, ids = tree.ids, nodeSize = tree.nodeSize
-            var range = to - from;
-            //median
-            var m = Math.floor((from + to) / 2);
-
-            //if bottom reached - include every point
-            if (range <= nodeSize) {
-                // for (var id = from; id <= to; id++) {
-                    // var x = coords[2 * id];
-                    // var y = coords[2 * id + 1];
-                    // if (x >= bounds[0] && x <= bounds[2] && y >= bounds[1] && y <= bounds[3])
-                    // addPoint(id)
-                // }
-                // addPoint(m)
-                //pick single random from the range
-                // var id = Math.floor(Math.random() * (from - to) + from)
-                result.push(ids[m]);
-                return
-            }
-
-            var x = coords[2 * m];
-            var y = coords[2 * m + 1];
-            // result.push(ids[m]);
+module.exports = pointCluster
 
 
-            //if required radius larger than cluster span - exit
-            if (sq(box) <= pr2) {
-                //TODO: mark points belonging to radius as covered
-                result.push(ids[m]);
-                return;
-            }
+//create index for the set of points based on divider method
+function pointCluster(points, redistribute) {
+	if (!redistribute) throw Error('Second argument should be a function or a string')
+	if (typeof redistribute === 'string') {
+		redistribute = types[redistribute]
 
-            // if (x >= bounds[0] && x <= bounds[2] && y >= bounds[1] && y <= bounds[3]) {
-                // var id = Math.floor(Math.random() * range + from)
-               // result.push(ids[m]);
-            // }
+		if (!redistribute) throw Error('Unknown type of cluster: `' + redistribute + '`')
+	}
 
-            //go deeper
-            axis = (axis + 1) % 2;
-            depth++
+	points = unroll(points)
 
-            if (depth <= maxDepth) {
-                getPoints(tree, from, m-1, axis, [box[0], box[1], axis ? x : box[2], axis ? box[3] : y], depth)
-                getPoints(tree, m+1, to, axis, [axis ? x : box[0], axis ? box[1] : y, box[2], box[3]], depth)
-            }
-            else {
-                throw 'Max depth reached'
-            }
-        }
+	//create ids
+	let count = points.length >>> 1
+	let ids = new Int32Array(count)
+	for (let i = 0; i < count; i++) {
+		ids[i] = i
+	}
 
-        return result
-    }
+	//create tree
+	let root = {
+		id: 0,
+		parent: null,
+		start: 0,
+		end: count,
+		children: []
+	}
 
-    function sq(box) {
-        var dx = box[2]-box[0]
-        var dy = box[3]-box[1]
-        return dx*dy
-    }
+	let c = 0
+	divide(root)
 
-    function maxDist(box) {
-        var max = Math.max(box[2]-box[0],box[3]-box[1])
-        return max*max
-    }
+	//process node
+	function divide(node) {
+		c++
+		if (c > 10) throw Error('Recursion')
+		let sections = redistribute(ids.subarray(node.start, node.end), points, node)
+		if (Array.isArray(sections)) {
+			for (let i = 0, offset = node.start; i < sections.length; i++) {
+				let subids = sections[i]
 
-    function sqDist(box) {
-        var dx = box[2]-box[0]
-        var dy = box[3]-box[1]
-        return dx*dx + dy*dy
-    }
+				if (!subids || !subids.length) continue;
 
-    //get points covering the area with defined radius
-    function cover (radius) {
-        var result = []
+				let end = offset + subids.length;
 
-        //TODO: in order to reduce scale search, we can limit radius by known data bounds
-        //TODO: point radius may vary for different points, so take that in account, like id => r
+				//put new ids by the offset
+				ids.set(subids, offset)
 
-        //object is way faster than Set for .has testing on big number of items
-        var marked = {}
-        var ids = tree.ids;
+				//create subgroup descriptor node
+				let subnode = {
+					id: i,
+					parent: node,
+					start: offset,
+					end: end,
+					children: []
+				}
 
-        for (var i = 0, l = ids.length; i < l; i++) {
-            var id = ids[i]
+				offset = end
 
-            // if we've already visited the point at this zoom level, skip it
-            if (marked[id]) {
-                continue;
-            }
-            marked[id] = true
+				node.children.push(subnode)
+			}
 
-            var x = points[id*2]
-            var y = points[id*2+1]
+			for (let i = 0, l = node.children.length; i < l; i++) {
+				let subnode = node.children[i]
 
-            // exclude neighbours from processing
-            var neighborIds = tree.within(x, y, radius);
-            // var neighborIds = tree.range(x-r, y-r, x+r, y+r);
+				divide(subnode)
+			}
+		}
+	}
 
-            for (var j = 0; j < neighborIds.length; j++) {
-                var b = neighborIds[j];
-                if (marked[b]) {
-                    continue;
-                }
-                marked[b] = true;
-            }
-
-            // put point for the level
-            result.push(id)
-        }
-
-        return result;
-    }
+	return root
 }
 
+
+//return flat point set, make sure points are copied
+function unroll(points) {
+	let unrolled
+	if (points[0].length) {
+		unrolled = new Float64Array(points.length)
+		for (let i = 0, l = points.length; i < l; i++) {
+			unrolled[i*2] = points[i][0]
+			unrolled[i*2+1] = points[i][1]
+		}
+	}
+	else {
+		unrolled = new Float64Array(points.length)
+		unrolled.set(points)
+	}
+	return unrolled
+}
