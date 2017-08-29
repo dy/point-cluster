@@ -7,7 +7,7 @@ const fit = require('canvas-fit')
 const snap = require('snap-points-2d')
 
 //render points
-let N = 1e5
+let N = 1e6
 let pts = Array(N*2)
 
 for (let i = 0; i < N; i++) {
@@ -15,7 +15,7 @@ for (let i = 0; i < N; i++) {
 	pts[i*2+1] = random()
 }
 
-const drawPoints = require('../regl-scatter2d')({color: 'rgba(0,0,255,.15)', size: 5, points: pts})
+const drawPoints = require('../regl-scatter2d')({color: 'rgba(0,0,255,.15)', size: 5, points: pts, snap: false})
 
 
 //create canvas for rects
@@ -31,35 +31,46 @@ let bounds = getBounds(pts, 2)
 
 
 
+let c = 0
 //cluster points
 console.time(1)
 let index = cluster(pts, {
 	divide: quadsection,
-	nodeSize: 32
+	nodeSize: 8
 })
 console.timeEnd(1)
 
 let lod = index.levels
 drawPoints({elements: lod.slice(0,1e4), color: 'rgba(0,0,0,.5)'})
 
-// console.time(2)
-// snap(pts)
-// console.timeEnd(2)
+console.time(2)
+snap(pts)
+console.timeEnd(2)
 
 
 function kdsection (ids, points, node) {
 
 }
 
-
 function quadsection (ids, points, node) {
 	let box
+	// if(c++ > 40) throw Error('recursion')
 
-	//parent box are data box
+
+	// let div = ids.length*.25
+
+	// let groups = [
+	// 	ids.slice(0, ~~div), ids.slice(~~div, ~~(div*2)), ids.slice(~~(div*2), ~~(div*3)), ids.slice(~~(div*3))
+	// ]
+
+	// return groups
+
+
+	//parent box is data box
 	if (!node.parent) {
 		box = getBounds(points, 2)
 	}
-	//child box are parent box
+	//child box is parent box
 	else {
 		box = node.parent.childBox[node.id]
 	}
@@ -85,53 +96,30 @@ function quadsection (ids, points, node) {
 	// 	h - h * ((box[1] - bounds[1]) / range[1] || 0)
 	// )
 
-	let mid = [(box[2] + box[0]) * .5, (box[3] + box[1]) * .5]
+	let [l,t,r,b] = box
+	let [cx, cy] = [(r + l) * .5, (b + t) * .5]
 
 	node.childBox = [
-		[box[0], box[1], mid[0], mid[1]],
-		[mid[0], box[1], box[2], mid[1]],
-		[box[0], mid[1], mid[0], box[3]],
-		[mid[0], mid[1], box[2], box[3]]
+		[l, t, cx, cy],
+		[cx, t, r, cy],
+		[l, cy, cx, b],
+		[cx, cy, r, b]
 	]
 
 	//collect tl/tr/bl/br parts
-	let groups = [
-		collectPointsInRect(ids, points, node.childBox[0]),
-		collectPointsInRect(ids, points, node.childBox[1]),
-		collectPointsInRect(ids, points, node.childBox[2]),
-		collectPointsInRect(ids, points, node.childBox[3])
-	]
+	let groups = [[], [], [], []]
+	for (let i = 0, len = ids.length; i < len; i++) {
+		let g = 0
+		let id = ids[i]
+		let x = points[id<<1]
+		let y = points[1 + (id<<1)]
+		if (x-l > r-x) g++
+		if (y-t > b-y) g+=2
+		groups[g].push(id)
+	}
 
 	return groups
 }
-
-function collectPointsInRect (ids, points, rect) {
-	let result = []
-
-	for (let i = 0, l = ids.length; i < l; i++) {
-		let id = ids[i]
-		if (id < 0) continue
-
-		let x = points[id * 2]
-		let y = points[id * 2 + 1]
-
-		//TODO: replace with proper module
-		if (pointInRect(x, y, rect)) {
-			result.push(id)
-			ids[i] = -1
-		}
-	}
-
-	if (!result.length) return null;
-
-	return result
-}
-
-function pointInRect (x, y, rect) {
-	return (x >= rect[0] && y >= rect[1] && x <= rect[2] && y <= rect[3])
-}
-
-
 
 
 
