@@ -7,7 +7,7 @@ const fit = require('canvas-fit')
 const snap = require('snap-points-2d')
 
 //render points
-let N = 1e4
+let N = 1e5
 let pts = Array(N*2)
 
 for (let i = 0; i < N; i++) {
@@ -39,8 +39,8 @@ let index = cluster(pts, {
 })
 console.timeEnd(1)
 
-// let lod = index.levels()
-// drawPoints({elements: lod.slice(0,5e3), color: 'rgba(0,0,0,.5)'})
+let lod = index.levels
+drawPoints({elements: lod.slice(0,1e4), color: 'rgba(0,0,0,.5)'})
 
 // console.time(2)
 // snap(pts)
@@ -65,17 +65,17 @@ function quadsection (ids, points, node) {
 	}
 
 
-	drawPoints({ids: ids})
+	// drawPoints({ids: ids})
 
-	let boxdim = [box[2] - box[0], box[3] - box[1]]
-	let range = [bounds[2] - bounds[0], bounds[3] - bounds[1]]
-	ctx.fillStyle = 'rgba(255, 0, 0, .15)'
-	ctx.fillRect(
-		w * ((box[0] - bounds[0]) / range[0]) || 0,
-		h - (h * ((box[1] - bounds[1]) / range[1]) || 0) - h * boxdim[1] / range[1],
-		w * boxdim[0] / range[0],
-		h * boxdim[1] / range[1]
-	)
+	// let boxdim = [box[2] - box[0], box[3] - box[1]]
+	// let range = [bounds[2] - bounds[0], bounds[3] - bounds[1]]
+	// ctx.fillStyle = 'rgba(255, 0, 0, .15)'
+	// ctx.fillRect(
+	// 	w * ((box[0] - bounds[0]) / range[0]) || 0,
+	// 	h - (h * ((box[1] - bounds[1]) / range[1]) || 0) - h * boxdim[1] / range[1],
+	// 	w * boxdim[0] / range[0],
+	// 	h * boxdim[1] / range[1]
+	// )
 
 	// ctx.fillStyle = 'rgba(0,0,127,.9)'
 	// ctx.textBaseline = 'bottom'

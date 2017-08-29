@@ -39,10 +39,16 @@ function pointCluster(points, options) {
 		start: 0,
 		end: count,
 		children: null,
-		last: true
+		last: true,
+		skip: 0
 	}
 
 	let stack = [root]
+
+	//create levels id set
+	let levelOffset = 0, backLevelOffset = ids.length
+	let levels = new Uint32Array(count)
+	levels[levelOffset++] = ids[ids.length - 1]
 
 	while (stack.length) {
 		let node = stack.shift()
@@ -73,6 +79,7 @@ function pointCluster(points, options) {
 			children.push({
 				id: i,
 				depth: node.depth + 1,
+				skip: 0,
 				parent: node,
 				start: offset,
 				end: end,
@@ -86,14 +93,25 @@ function pointCluster(points, options) {
 		if (!children.length) continue
 
 		node.children = children
-		node.children[node.children.length - 1].last = true
+
+		//mark last node
+		let last = node.children[node.children.length - 1]
+		last.last = true
+		last.skip = node.skip + 1
 
 		for (let i = 0; i < node.children.length; i++) {
 			let child = node.children[i]
 
 			//divide big enough nodes
 			if ((child.end - child.start) > nodeSize) {
+				levels[levelOffset++] = ids[child.end - child.skip - 1]
 				stack.push(child)
+			}
+			else {
+				levels[levelOffset++] = ids[child.end - child.skip - 1]
+				let subids = ids.subarray(child.start, Math.max(child.start, child.end - child.skip - 2))
+				backLevelOffset -= subids.length
+				levels.set(subids, backLevelOffset)
 			}
 		}
 	}
@@ -101,7 +119,7 @@ function pointCluster(points, options) {
 	return {
 		tree: root,
 		id: ids,
-		levels: buildLevels
+		levels: levels
 	}
 
 	//TODO: build levels in proper fashion
