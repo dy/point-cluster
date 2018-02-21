@@ -1,6 +1,6 @@
 # point-cluster [![Build Status](https://travis-ci.org/dfcreative/point-cluster.svg?branch=master)](https://travis-ci.org/dfcreative/point-cluster)
 
-Generic performant point clustering for datavis purposes. Covers kd-tree, quadtree, ANN tree etc.
+Point clustering for data-visualization purposes. Implements kdtree, quadtree, ANN tree, rdtree and any other custom tree.
 
 Requirements:
 
@@ -8,45 +8,67 @@ Requirements:
 * closest/range methods
 * z-index order
 * no noticeable clustering artifacts
-* faster than kd-tree (optionally)
+* faster than kd-tree (optionally), as fast as snap-points-2d
 * allow appending/removing points (optionally)
-* splatting
+* splatting by zoom layers as snap-points-2d
 * no memory overuse
+* adding points
+* keeping visible points in reclustering
 
 ```js
-var cluster = require('point-cluster')
+const cluster = require('point-cluster')
 
-var index = cluster(points);
+// build a tree
+let tree = cluster(points)
 
-index.getClusters([-180, -85, 180, 85], 2);
+
 ```
 
 ## API
 
 ### `index = cluster(points, options?)`
 
+Create index tree for the set of points based on options.
+
 `points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` form.
+
+`split` is a function with the signature:
+
+```js
+split(ids) {
+	//sort ids in the ascending group order first
+	...
+
+	//invoke done callbacks for every subgroup of ids need further secioning
+	split(ids.subarray(0, group1))
+	split(ids.subarray(group1, group2))
+	...
+	split(ids.subarray(groupN))
+}
+```
 
 Option | Default | Description
 ---|---|---
-`nodeSize` | `64` | Node size to stop splitting, may significantly increase performance.
-`divide` | `null` | Divisor with `(ids, points) => [group1, group2, ...]` signature. It takes list of point identifiers `ids` and expects to return all the ids redistributed by subgroups for sectioning. If no groups returned, the node will be considered final.
+`data` | `{}` | Provides initial data for root node, like diam, center, data bounds etc.
+`traversal` | `'depth'` | `depth`-first or `breadth`-first order of tree sorting. First is a bit faster, second might be more useful for rendering applications as invokes `split` by levels.
+`nodeSize` | `1` | Min size of node, bigger values increase performance but may not be suitable for rendering
+`xsort` | `false` | Sort output cluster values by x-coordinate, can be useful for faster rendering (splatting, see snap-points-2d)
+`reverse` | `false` | Form layers based on last point from the set rather than the first. May be useful to preserve z-order of points
 
+### `tree.level(n)`
 
-### `index.closest([x, y])`
+Get points belonging to a specific level.
 
-Get point closest to the coordinates.
-
-### `index.range([left, top, right, bottom])`
+### `tree.range([left, top, right, bottom])`
 
 Get set of points from the rectangular range.
 
-### `index.radius([x, y], r)`
+### `tree.radius([x, y], r)`
 
 Get points within defined radius of a coordinate.
 
 
 ### Related
 
-* [snap-points-2d](https://github.com/gl-vis/snap-points-2d) — grouping points by pixels
-* [kdgrass](https://github.com/dfcreative/kdgrass) — minimal kd-tree implementation
+* [snap-points-2d](https://github.com/gl-vis/snap-points-2d) — grouping points by pixels.
+* [kdgrass](https://github.com/dfcreative/kdgrass) — minimal kd-tree implementation.

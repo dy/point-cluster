@@ -1,190 +1,190 @@
-/**
- * @module  point-cluster
- */
-
-'use strict';
+'use strict'
 
 
-const types = require('./types')
+const getBounds = require('array-bounds')
+const parseRect = require('parse-rect')
+const pick = require('pick-by-alias')
+const defined = require('defined')
+
+module.exports = cluster
 
 
-module.exports = pointCluster
+function cluster(srcPoints, options) {
+  // slice points
+  let n = srcPoints.length >>> 1
+  let points = new Float64Array(n * 2)
 
 
-//create index for the set of points based on divider method
-function pointCluster(points, options) {
-	// if (!redistribute) throw Error('Second argument should be a function or a string')
-	// if (typeof redistribute === 'string') {
-	// 	redistribute = types[redistribute]
+  // sort out options
+  if (!options) options = {}
+  if (typeof options === 'string') options = {type: options}
 
-	// 	if (!redistribute) throw Error('Unknown type of cluster: `' + redistribute + '`')
-	// }
-	let redistribute = options.divide
-	let nodeSize = options.nodeSize || 128
+  options = pick(options, {
+    bounds: 'range bounds',
+    type: 'type kind split',
+    sort: 'sortBy sortby sort',
+    tail: 'tail reverse levelReverse reverseLevel tailFirst last',
+    size: 'node nodeSize minNodeSize minSize size'
+  })
 
-	points = unroll(points)
+  options.bounds = defined(options.bounds, getBounds(srcPoints, 2))
+  options.type = defined(options.type, 'quad')
+  options.sort = defined(options.sort, 'x')
+  options.tail = defined(options.tail, false)
+  options.node = defined(options.node, 0)
 
-	//create ids
-	let count = points.length >>> 1
-	let ids = new Int32Array(count)
-	for (let i = 0; i < count; i++) {
-		ids[i] = i
-	}
 
-	//create tree
-	let root = {
-		id: 0,
-		depth: 0,
-		parent: null,
-		start: 0,
-		end: count,
-		children: null,
-		last: true,
-		skip: 0
-	}
+  // init variables
+  let ids = new Uint32Array(n)
+  let weights = new Uint32Array(n)
+  let levels = new Uint8Array(n)
+  for (let i = 0; i < n; ++i) {
+    ids[i] = i
+  }
+  let lox = options.bounds[0]
+  let loy = options.bounds[1]
+  let hix = options.bounds[2]
+  let hiy = options.bounds[3]
+  let scaleX = 1.0 / (hix - lox)
+  let scaleY = 1.0 / (hiy - loy)
+  let diam = Math.max(hix - lox, hiy - loy)
 
-	let stack = [root]
+  // normalize values
+  for (let i = 0; i < n; i++) {
+    points[2*i]   = (srcPoints[2*i]   - lox) * scaleX
+    points[2*i+1] = (srcPoints[2*i+1] - loy) * scaleY
+  }
 
-	//create levels id set
-	let levelOffset = 0, backLevelOffset = ids.length
-	let levels = new Uint32Array(count)
-	levels[levelOffset++] = ids[ids.length - 1]
+  // do according snapping
+  let ptr = 0
+  snapQuad(0, 0, 1, 0, n, 0)
 
-	while (stack.length) {
-		let node = stack.shift()
+  function snapQuad(x, y, diam, start, end, level) {
+    let diam_2 = diam * 0.5
+    let offset = start + 1
+    let count = end - start
+    weights[ptr] = count
+    levels[ptr++] = level
 
-		let sections = redistribute(ids.subarray(node.start, node.end), points, node)
+    for(let i=0; i<2; ++i) {
+      for(let j=0; j<2; ++j) {
+        let lox = x+i*diam_2
+        let loy = y+j*diam_2
+        let hix = lox + diam_2
+        let hiy = loy + diam_2
 
-		if (!sections.length) continue
+        // partition
+        let mid = offset
+        for(let i=offset; i < end; ++i) {
+          let x  = points[2*i]
+          let y  = points[2*i+1]
+          let s  = ids[i]
+          if(lox <= x && x <= hix &&
+             loy <= y && y <= hiy) {
+            if(i === mid) {
+              mid += 1
+            } else {
+              points[2*i]     = points[2*mid]
+              points[2*i+1]   = points[2*mid+1]
+              ids[i]          = ids[mid]
+              points[2*mid]   = x
+              points[2*mid+1] = y
+              ids[mid]        = s
+              mid += 1
+            }
+          }
+        }
 
-		let children = []
+        if(mid === offset) continue
 
-		for (let i = 0, offset = node.start; i < sections.length; i++) {
-			let subids = sections[i]
+        snapQuad(lox, loy, diam_2, offset, mid, level+1)
+        offset = mid
+      }
+    }
+  }
 
-			if (!subids || !subids.length) {
-				continue;
-			}
 
-			//unchanged subids means repeated point coords, so ignore leaf
-			if (subids.length === ids.length) {
-				continue;
-			}
+  if (options.sort) {
+    // pack levels: uint8, x-coord: uint16 and id: uint32 to float64
+    let packed = new Float64Array(n)
+    let packedInt = new Uint32Array(packed.buffer)
+    for (let i = 0; i < n; i++) {
+      packedInt[i * 2] = i
+      packedInt[i * 2 + 1] = (0x3ff00000 & (levels[i] << 20) | 0x0000ffff & ((1 - points[i * 2]) * 0xffff))
+    }
 
-			//write subids to ids
-			ids.set(subids, offset)
+    // do native sort
+    packed.sort()
 
-			let end = offset + subids.length;
+    // unpack data back
+    let sortedLevels = new Uint8Array(n)
+    let sortedWeights = new Uint32Array(n)
+    let sortedIds = new Uint32Array(n)
+    let sortedPoints = new Float64Array(n * 2)
+    for (let i = 0; i < n; i++) {
+      let id = packedInt[(n - i - 1) * 2]
+      sortedLevels[i] = levels[id]
+      sortedWeights[i] = weights[id]
+      sortedIds[i] = ids[id]
+      sortedPoints[i * 2] = points[id * 2]
+      sortedPoints[i * 2 + 1] = points[id * 2 + 1]
+    }
 
-			children.push({
-				id: i,
-				depth: node.depth + 1,
-				skip: 0,
-				parent: node,
-				start: offset,
-				end: end,
-				children: null,
-				last: false
-			})
+    ids = sortedIds
+    levels = sortedLevels
+    points = sortedPoints
+    weights = sortedWeights
+  }
 
-			offset = end
-		}
 
-		if (!children.length) continue
+  // form levels of details
+  let lod         = []
+  let lastLevel   = 0
+  let prevOffset  = n
+  for(let ptr = n - 1; ptr >= 0; --ptr) {
+    let level = levels[ptr]
+    if(level === lastLevel) continue
 
-		node.children = children
+    lod.push({
+      pixelSize: diam * Math.pow(0.5, level),
+      offset: ptr + 1,
+      count: prevOffset - (ptr + 1)
+    })
+    prevOffset = ptr+1
 
-		//mark last node
-		let last = node.children[node.children.length - 1]
-		last.last = true
-		last.skip = node.skip + 1
+    lastLevel = level
+  }
 
-		for (let i = 0; i < node.children.length; i++) {
-			let child = node.children[i]
+  lod.push({
+    pixelSize: diam * Math.pow(0.5, levels[0] + 1),
+    offset: 0,
+    count: prevOffset
+  })
 
-			//divide big enough nodes
-			if ((child.end - child.start) > nodeSize) {
-				levels[levelOffset++] = ids[child.end - child.skip - 1]
-				stack.push(child)
-			}
-			else {
-				levels[levelOffset++] = ids[child.end - child.skip - 1]
-				let subids = ids.subarray(child.start, Math.max(child.start, child.end - child.skip - 2))
-				backLevelOffset -= subids.length
-				levels.set(subids, backLevelOffset)
-			}
-		}
-	}
 
-	return {
-		tree: root,
-		id: ids,
-		levels: levels
-	}
+  // get points within radius of the point
+  function radius (xy, r) {
 
-	//TODO: build levels in proper fashion
+  }
 
-	//create list with ids ordered by scale levels
-	function buildLevels() {
-		let lod = new Uint32Array(count)
-		let offset = 0
-		let stack = [root]
+  // get points within the range
+  function range () {
+    let {x, y, width, height} = parseRect(arguments)
+  }
 
-		lod[offset++] = ids[root.end - 1]
+  // get points belonging to the indicated level
+  function level (size) {
 
-		while (stack.length) {
-			let node = stack.shift()
+  }
 
-			if (!node.children) continue
-
-			//skip used points from the tail, that is number of last parent nodes
-			//TODO: There is probably easier z-curve method
-			let skip = 1, n = node
-			for (let d = node.depth; d--;) {
-				if (n.last) skip++
-				n = n.parent
-			}
-
-			//put kiddos' last points
-			for (let i = 0; i < node.children.length; i++) {
-				let child = node.children[i]
-				if (child.last) skip -= 1
-
-				if (child.children) {
-					lod[offset++] = ids[child.end - skip - 1]
-				}
-				else {
-					let subids = ids.subarray(child.start, child.end - skip)
-					lod.set(subids, offset)
-					offset += subids.length
-				}
-			}
-
-			//put next layer of children
-			for (let i = 0; i < node.children.length; i++) {
-				let child = node.children[i]
-				if (child.children) stack.push(node.children[i])
-			}
-		}
-
-		return lod
-	}
+  return {
+    radius,
+    range,
+    level,
+    levels: lod,
+    ids: ids,
+    weights: weights,
+    points: points
+  }
 }
 
-
-//return flat point set, make sure points are copied
-function unroll(points) {
-	let unrolled
-	if (points[0].length) {
-		unrolled = new Float64Array(points.length)
-		for (let i = 0, l = points.length; i < l; i++) {
-			unrolled[i*2] = points[i][0]
-			unrolled[i*2+1] = points[i][1]
-		}
-	}
-	else {
-		unrolled = new Float64Array(points.length)
-		unrolled.set(points)
-	}
-	return unrolled
-}
