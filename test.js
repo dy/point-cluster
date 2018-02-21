@@ -8,9 +8,8 @@ const approxEqual = require('almost-equal')
 t('snap-points-2d', t => {
   function verifySnap(srcPoints) {
     let numPoints = srcPoints.length>>>1
-    let bounds    = []
 
-    let {levels, ids, weights, points} = cluster(srcPoints, bounds)
+    let {levels, ids, weights, points, bounds} = cluster(srcPoints)
     let npoints = points
 
     let sx = bounds[0]
@@ -30,7 +29,6 @@ t('snap-points-2d', t => {
 
     for(let i=0; i < levels.length; ++i) {
       let s = levels[i]
-
       let r = s.pixelSize
       let offs  = s.offset
       let count = s.count
@@ -117,14 +115,14 @@ t('no arguments', t => {
 t('larger bounds', t => {
   let pos = [0,0, 1,1, 2,2, 3,3, 4,4]
 
-  let {levels} = cluster(pos.slice(), [0,0,4,4])
+  let {levels} = cluster(pos.slice(), { bounds: [0,0,4,4] })
   t.deepEqual(levels, [
       {pixelSize: 2, offset: 4, count: 1},
       {pixelSize: 1, offset: 2, count: 2},
       {pixelSize: 0.5, offset: 0, count: 2}
   ])
 
-  let index = cluster(pos.slice(), [0,0,40,40])
+  let index = cluster(pos.slice(), { bounds: [0,0,40,40] })
   levels = index.levels
 
   t.deepEqual(levels, [
@@ -142,12 +140,12 @@ t('larger bounds', t => {
 
 
 
-t.only('performance', t => {
+t.skip('performance', t => {
 	let N = 1e6
 	let points = new Float64Array(N)
 
 	for (let i = 0; i < N; i++) {
-	points[i] = Math.random()
+		points[i] = Math.random()
 	}
 
 	let snap = require('../snap-points-2d')
@@ -159,6 +157,7 @@ t.only('performance', t => {
 	console.time(2)
 	snap(points)
 	console.timeEnd(2)
+
 
 	t.end()
 })

@@ -27,12 +27,14 @@ function cluster(srcPoints, options) {
     size: 'node nodeSize minNodeSize minSize size'
   })
 
-  options.bounds = defined(options.bounds, getBounds(srcPoints, 2))
   options.type = defined(options.type, 'quad')
   options.sort = defined(options.sort, 'x')
   options.tail = defined(options.tail, false)
   options.node = defined(options.node, 0)
 
+  let bounds = defined(options.bounds, getBounds(srcPoints, 2))
+  if (bounds[0] === bounds[2]) bounds[2]++
+  if (bounds[1] === bounds[3]) bounds[3]++
 
   // init variables
   let ids = new Uint32Array(n)
@@ -41,10 +43,10 @@ function cluster(srcPoints, options) {
   for (let i = 0; i < n; ++i) {
     ids[i] = i
   }
-  let lox = options.bounds[0]
-  let loy = options.bounds[1]
-  let hix = options.bounds[2]
-  let hiy = options.bounds[3]
+  let lox = bounds[0]
+  let loy = bounds[1]
+  let hix = bounds[2]
+  let hiy = bounds[3]
   let scaleX = 1.0 / (hix - lox)
   let scaleY = 1.0 / (hiy - loy)
   let diam = Math.max(hix - lox, hiy - loy)
@@ -184,7 +186,8 @@ function cluster(srcPoints, options) {
     levels: lod,
     ids: ids,
     weights: weights,
-    points: points
+    points: points,
+    bounds: bounds
   }
 }
 
