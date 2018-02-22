@@ -140,7 +140,7 @@ t('larger bounds', t => {
 
 
 
-t.skip('performance', t => {
+t.only('performance', t => {
 	let N = 1e6
 	let points = new Float64Array(N)
 
@@ -150,14 +150,16 @@ t.skip('performance', t => {
 
 	let snap = require('../snap-points-2d')
 
-	console.time(1)
-	cluster(points)
-	console.timeEnd(1)
+  console.time(1)
+  cluster(points, {type: 'kd'})
+  console.timeEnd(1)
 
-	console.time(2)
-	snap(points)
-	console.timeEnd(2)
+  console.time(2)
+  snap(points)
+  console.timeEnd(2)
+
 
 
 	t.end()
 })
+

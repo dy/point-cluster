@@ -5,6 +5,10 @@ const getBounds = require('array-bounds')
 const parseRect = require('parse-rect')
 const pick = require('pick-by-alias')
 const defined = require('defined')
+const types = {
+  quad: require('./sort/quad'),
+  kd: require('./sort/kd')
+}
 
 module.exports = cluster
 
@@ -32,9 +36,10 @@ function cluster(srcPoints, options) {
   options.tail = defined(options.tail, false)
   options.node = defined(options.node, 0)
 
-  let bounds = defined(options.bounds, getBounds(srcPoints, 2))
+  let bounds = options.bounds = defined(options.bounds, getBounds(srcPoints, 2))
   if (bounds[0] === bounds[2]) bounds[2]++
   if (bounds[1] === bounds[3]) bounds[3]++
+
 
   // init variables
   let ids = new Uint32Array(n)
@@ -51,61 +56,20 @@ function cluster(srcPoints, options) {
   let scaleY = 1.0 / (hiy - loy)
   let diam = Math.max(hix - lox, hiy - loy)
 
-  // normalize values
+
+  // normalize points
   for (let i = 0; i < n; i++) {
     points[2*i]   = (srcPoints[2*i]   - lox) * scaleX
     points[2*i+1] = (srcPoints[2*i+1] - loy) * scaleY
   }
 
-  // do according snapping
-  let ptr = 0
-  snapQuad(0, 0, 1, 0, n, 0)
 
-  function snapQuad(x, y, diam, start, end, level) {
-    let diam_2 = diam * 0.5
-    let offset = start + 1
-    let count = end - start
-    weights[ptr] = count
-    levels[ptr++] = level
-
-    for(let i=0; i<2; ++i) {
-      for(let j=0; j<2; ++j) {
-        let lox = x+i*diam_2
-        let loy = y+j*diam_2
-        let hix = lox + diam_2
-        let hiy = loy + diam_2
-
-        // partition
-        let mid = offset
-        for(let i=offset; i < end; ++i) {
-          let x  = points[2*i]
-          let y  = points[2*i+1]
-          let s  = ids[i]
-          if(lox <= x && x <= hix &&
-             loy <= y && y <= hiy) {
-            if(i === mid) {
-              mid += 1
-            } else {
-              points[2*i]     = points[2*mid]
-              points[2*i+1]   = points[2*mid+1]
-              ids[i]          = ids[mid]
-              points[2*mid]   = x
-              points[2*mid+1] = y
-              ids[mid]        = s
-              mid += 1
-            }
-          }
-        }
-
-        if(mid === offset) continue
-
-        snapQuad(lox, loy, diam_2, offset, mid, level+1)
-        offset = mid
-      }
-    }
-  }
+  // run tree clustering sort
+  let snap = types[options.type]
+  snap(points, ids, levels, weights, options)
 
 
+  // use x-sort if required
   if (options.sort) {
     // pack levels: uint8, x-coord: uint16 and id: uint32 to float64
     let packed = new Float64Array(n)
@@ -156,7 +120,6 @@ function cluster(srcPoints, options) {
 
     lastLevel = level
   }
-
   lod.push({
     pixelSize: diam * Math.pow(0.5, levels[0] + 1),
     offset: 0,
