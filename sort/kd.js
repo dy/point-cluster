@@ -10,53 +10,57 @@
 module.exports = function clusterKD (points, ids, levels, weights, options) {
     let ptr = 0
     let n = ids.length
-    let nodeSize = 2
+    let nodeSize = options.nodeSize
 
-    sort(0, 0, 1, 0, n, 0)
+    sort(0, n - 1, 0)
 
-    function sort(left, right, depth) {
-        if (right - left <= nodeSize) return;
+    function sort(left, right, level) {
+        let count = right - left
+        weights[ptr] = count
+        levels[ptr++] = level
 
-        var m = Math.floor((left + right) / 2);
+        if (count <= nodeSize) return;
 
-        select(ids, points, m, left, right, depth % 2);
+        let m = Math.floor((left + right) / 2);
 
-        sort(left, m - 1, depth + 1);
-        sort(m + 1, right, depth + 1);
+        select(m, left, right, level % 2);
+
+        sort(left, m - 1, level + 1);
+        sort(m + 1, right, level + 1);
     }
 
     function select(k, left, right, inc) {
         while (right > left) {
             if (right - left > 600) {
-                var n = right - left + 1;
-                var m = k - left + 1;
-                var z = Math.log(n);
-                var s = 0.5 * Math.exp(2 * z / 3);
-                var sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
-                var newLeft = Math.max(left, Math.floor(k - m * s / n + sd));
-                var newRight = Math.min(right, Math.floor(k + (n - m) * s / n + sd));
-                select(ids, points, k, newLeft, newRight, inc);
+                let n = right - left + 1;
+                let m = k - left + 1;
+                let z = Math.log(n);
+                let s = 0.5 * Math.exp(2 * z / 3);
+                let sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
+                let newLeft = Math.max(left, Math.floor(k - m * s / n + sd));
+                let newRight = Math.min(right, Math.floor(k + (n - m) * s / n + sd));
+                select(k, newLeft, newRight, inc);
             }
 
-            var t = points[2 * k + inc];
-            var i = left;
-            var j = right;
+            let t = points[2 * k + inc];
+            let i = left;
+            let j = right;
 
-            swapItem(ids, points, left, k);
-            if (points[2 * right + inc] > t) swapItem(ids, points, left, right);
+            swapItem(left, k);
+            if (points[2 * right + inc] > t) swapItem(left, right);
 
             while (i < j) {
-                swapItem(ids, points, i, j);
+                swapItem(i, j);
                 i++;
                 j--;
                 while (points[2 * i + inc] < t) i++;
                 while (points[2 * j + inc] > t) j--;
             }
 
-            if (points[2 * left + inc] === t) swapItem(ids, points, left, j);
+            if (points[2 * left + inc] === t) swapItem(left, j);
             else {
                 j++;
-                swapItem(ids, points, j, right);
+                swapItem(j, right);
             }
 
             if (j <= k) left = j + 1;
@@ -64,14 +68,14 @@ module.exports = function clusterKD (points, ids, levels, weights, options) {
         }
     }
 
-    function swapItem(ids, points, i, j) {
+    function swapItem(i, j) {
         swap(ids, i, j);
         swap(points, 2 * i, 2 * j);
         swap(points, 2 * i + 1, 2 * j + 1);
     }
 
     function swap(arr, i, j) {
-        var tmp = arr[i];
+        let tmp = arr[i];
         arr[i] = arr[j];
         arr[j] = tmp;
     }

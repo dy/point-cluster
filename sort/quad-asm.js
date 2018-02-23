@@ -1,15 +1,39 @@
 /**
- * quad-tree based clustering
+ * Asm.js version of quad-tree
  * Based on snap-points-2d
  */
 
 'use strict'
 
-module.exports = function clusterQuad (points, ids, levels, weights, options) {
+module.exports = clusterQuad
+
+function clusterQuad (points, ids, levels, weights, options) {
 	let ptr = 0
 	let n = ids.length
 
-	sort(0, n, 0, 0, 0, 1)
+	// put data to heap
+	_cluster()
+
+	// read data from heap
+}
+
+let N = 1e6
+let pointsOffset = 0
+let idsOffset = N * 2 * Float64Array.BYTES_PER_ELEMENT
+let levelsOffset = idsOffset + N * Uint32Array.BYTES_PER_ELEMENT
+let weightsOffset = levelsOffset + N * Uint8Array.BYTES_PER_ELEMENT
+let size = weightsOffset + N * Uint32Array.BYTES_PER_ELEMENT
+let heap = new ArrayBuffer(size)
+
+let _cluster = createCluster({Math, Float64Array, Uint32Array, Uint8Array}, null, heap)
+
+function createCluster(stdlib, foreign, heap) {
+	'use asm'
+
+	let points = new stdlib.Float64Array(heap)
+	let ids = new stdlib.Uint32Array(heap)
+	let levels = new stdlib.Uint8Array(heap)
+	let weights = new stdlib.Uint32Array(heap)
 
 	function sort (left, right, level, x, y, diam) {
 		let diam_2 = diam * 0.5
@@ -21,18 +45,15 @@ module.exports = function clusterQuad (points, ids, levels, weights, options) {
 
 		for(let i=0; i < 2; ++i) {
 			for(let j=0; j < 2; ++j) {
-				let lox = x+i*diam_2
-				let loy = y+j*diam_2
+				let lox = x + i * diam_2
+				let loy = y + j * diam_2
 				let hix = lox + diam_2
 				let hiy = loy + diam_2
 
-				// sort points in order of belonging to sections (partition)
 				let mid = select(offset, right, lox, loy, hix, hiy)
 
-				// last level found
 				if(mid === offset) continue
 
-				// sort section internals
 				sort(offset, mid, level + 1, lox, loy, diam_2)
 
 				offset = mid

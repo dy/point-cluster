@@ -49,7 +49,7 @@ let x = bounds[0]
 let y = bounds[1]
 
 console.time(1)
-let index = cluster(pts)
+let index = cluster(pts, {type: 'kd'})
 console.timeEnd(1)
 let {levels, ids} = index
 
@@ -59,7 +59,7 @@ let {levels, ids} = index
 // console.timeEnd(2)
 
 for (let i = 0, l = levels.length; i < l; i++) {
-	// if (i < 9) continue;
+	// if (i != 13) continue;
 
 	let lvl = levels[i]
 

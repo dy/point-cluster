@@ -7,6 +7,7 @@ const pick = require('pick-by-alias')
 const defined = require('defined')
 const types = {
   quad: require('./sort/quad'),
+  'quad-asm': require('./sort/quad'),
   kd: require('./sort/kd')
 }
 
@@ -21,20 +22,20 @@ function cluster(srcPoints, options) {
 
   // sort out options
   if (!options) options = {}
-  if (typeof options === 'string') options = {type: options}
+  if (typeof options === 'string') options = { type: options }
 
   options = pick(options, {
     bounds: 'range bounds',
     type: 'type kind split',
     sort: 'sortBy sortby sort',
     tail: 'tail reverse levelReverse reverseLevel tailFirst last',
-    size: 'node nodeSize minNodeSize minSize size'
+    nodeSize: 'node nodeSize minNodeSize minSize size'
   })
 
   options.type = defined(options.type, 'quad')
   options.sort = defined(options.sort, 'x')
   options.tail = defined(options.tail, false)
-  options.node = defined(options.node, 0)
+  options.nodeSize = defined(options.nodeSize, 0)
 
   let bounds = options.bounds = defined(options.bounds, getBounds(srcPoints, 2))
   if (bounds[0] === bounds[2]) bounds[2]++
