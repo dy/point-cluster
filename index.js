@@ -7,7 +7,8 @@ const pick = require('pick-by-alias')
 const defined = require('defined')
 const types = {
   quad: require('./sort/quad'),
-  'quad-asm': require('./sort/quad'),
+  // 'quad-asm': require('./sort/quad-asm'),
+  'quad-bucket': require('./sort/quad-bucket'),
   kd: require('./sort/kd')
 }
 
@@ -43,7 +44,7 @@ function cluster(srcPoints, options) {
 
 
   // init variables
-  let ids = new Uint32Array(n)
+  let ids = Array(n)
   let weights = new Uint32Array(n)
   let levels = new Uint8Array(n)
   for (let i = 0; i < n; ++i) {
@@ -56,7 +57,6 @@ function cluster(srcPoints, options) {
   let scaleX = 1.0 / (hix - lox)
   let scaleY = 1.0 / (hiy - loy)
   let diam = Math.max(hix - lox, hiy - loy)
-
 
   // normalize points
   for (let i = 0; i < n; i++) {
@@ -135,7 +135,9 @@ function cluster(srcPoints, options) {
 
   // get points within the range
   function range () {
-    let {x, y, width, height} = parseRect(arguments)
+    let {x, y, width, height} = parseRect(...arguments)
+
+    // get down by levels
   }
 
   // get points belonging to the indicated level

@@ -9,7 +9,9 @@ module.exports = function clusterQuad (points, ids, levels, weights, options) {
 	let ptr = 0
 	let n = ids.length
 
+	console.time('cluster')
 	sort(0, n, 0, 0, 0, 1)
+	console.timeEnd('cluster')
 
 	function sort (left, right, level, x, y, diam) {
 		let diam_2 = diam * 0.5
