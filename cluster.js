@@ -5,20 +5,16 @@ const getBounds = require('array-bounds')
 const parseRect = require('parse-rect')
 const pick = require('pick-by-alias')
 const defined = require('defined')
-const types = {
-  quad: require('./sort/quad'),
-  // 'quad-asm': require('./sort/quad-asm'),
-  'quad-bucket': require('./sort/quad-bucket'),
-  kd: require('./sort/kd')
-}
-
-module.exports = cluster
 
 
-function cluster(srcPoints, options) {
+module.exports = PointCluster
+
+function PointCluster(srcPoints, options) {
+  if (!this instanceof PointCluster) return new PointCluster(srcPoints, options)
+
   // slice points
-  let n = srcPoints.length >>> 1
-  let points = new Float64Array(n * 2)
+  let n = this.n = srcPoints.length >>> 1
+  let points = this.points = new Float64Array(n * 2)
 
 
   // sort out options
@@ -33,23 +29,23 @@ function cluster(srcPoints, options) {
     nodeSize: 'node nodeSize minNodeSize minSize size'
   })
 
-  options.type = defined(options.type, 'quad')
-  options.sort = defined(options.sort, 'x')
-  options.tail = defined(options.tail, false)
-  options.nodeSize = defined(options.nodeSize, 0)
+  this.type = defined(options.type, 'quad')
+  this.sort = defined(options.sort, 'x')
+  this.tail = defined(options.tail, false)
+  this.nodeSize = defined(options.nodeSize, 0)
 
-  let bounds = options.bounds = defined(options.bounds, getBounds(srcPoints, 2))
+  let bounds = this.bounds = defined(options.bounds, getBounds(srcPoints, 2))
   if (bounds[0] === bounds[2]) bounds[2]++
   if (bounds[1] === bounds[3]) bounds[3]++
 
 
   // init variables
-  let ids = Array(n)
-  let weights = new Uint32Array(n)
-  let levels = new Uint8Array(n)
+  let ids = this.ids = Array(n)
   for (let i = 0; i < n; ++i) {
     ids[i] = i
   }
+  // let weights = new Uint32Array(n)
+  // let levels = new Uint8Array(n)
   let lox = bounds[0]
   let loy = bounds[1]
   let hix = bounds[2]
@@ -65,11 +61,7 @@ function cluster(srcPoints, options) {
   }
 
 
-  // run tree clustering sort
-  let snap = types[options.type]
-  snap(points, ids, levels, weights, options)
-
-
+  /*
   // use x-sort if required
   if (options.sort) {
     // pack levels: uint8, x-coord: uint16 and id: uint32 to float64
@@ -144,16 +136,6 @@ function cluster(srcPoints, options) {
   function level (size) {
 
   }
-
-  return {
-    radius,
-    range,
-    level,
-    levels: lod,
-    ids: ids,
-    weights: weights,
-    points: points,
-    bounds: bounds
-  }
+  */
 }
 

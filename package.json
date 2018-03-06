@@ -2,7 +2,7 @@
   "name": "point-cluster",
   "version": "1.0.0",
   "description": "Fast nd point clustering.",
-  "main": "index.js",
+  "main": "quad.js",
   "scripts": {
     "test": "node test",
     "build": "browserify demo.js -g bubleify | indexhtmlify | metadataify | github-cornerify > demo/index.html"
@@ -16,13 +16,25 @@
   },
   "keywords": [
     "snap-points-2d",
+    "quadtree",
+    "quad-tree",
+    "kdtree",
+    "kd-tree",
+    "ann-tree",
     "point",
     "scatter",
+    "point2d",
+    "2d",
+    "cluster",
     "clustering",
     "geospatial",
-    "markers"
+    "markers",
+    "round",
+    "data",
+    "vis",
+    "gl-vis"
   ],
-  "author": "Dmitry Yv",
+  "author": "Dmitry Yv <df.creative@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "array-bounds": "^1.0.1",

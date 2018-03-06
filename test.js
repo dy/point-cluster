@@ -134,7 +134,7 @@ t('quad: larger bounds', t => {
   t.end()
 })
 
-t.only('quad: offsets case', t => {
+t('quad: offsets case', t => {
   let points = [.15,.8, .2,.15, .6,.6, .6,.45, .8,.1, .9,.6, .91,.61]
   let index = cluster(points, {type: 'quad-bucket', bounds: [0,0,1,1]})
 })
@@ -226,8 +226,7 @@ t.skip('kd: radius search', t => {
   t.end();
 })
 
-
-t.skip('performance', t => {
+t.only('performance', t => {
 	let N = 1e6
 	let points = new Float64Array(N)
   let ids = new Uint32Array(N)
@@ -237,16 +236,9 @@ t.skip('performance', t => {
     ids[i] = i
 	}
 
-
   console.time(1)
-  cluster(points, {type: 'quad-bucket', sort: false})
+  cluster(points, {sort: false})
   console.timeEnd(1)
-
-  // console.time(2)
-  // snap(points)
-  // console.timeEnd(2)
-
-
 
 	t.end()
 })

@@ -1,71 +1,101 @@
 # point-cluster [![Build Status](https://travis-ci.org/dfcreative/point-cluster.svg?branch=master)](https://travis-ci.org/dfcreative/point-cluster)
 
-Point clustering for data-visualization purposes. Implements kdtree, quadtree, ANN tree, rdtree and any other custom tree.
+Point clustering for data visualization purposes. Useful for Canvas2D, SVG or WebGL scatter plots.
 
-Requirements:
+* [ ] quad-tree, kd-tree, ann-tree and other tree types.
+* [ ] splatting by zoom layers.
+* [ ] point selection/hover by range.
+* [ ] point radius and weight.
+* [ ] reverse z-index order mode to keep visible points in reclustering.
+* [ ] appending/removing points (optionally).
+* [ ] no visually noticeable clustering artifacts.
+* [ ] high performance (faster than [snap-points-2d](https://github.com/gl-vis/snap-points-2d)).
+* [ ] no memory overuse.
 
-* point radius
-* closest/range methods
-* z-index order
-* no noticeable clustering artifacts
-* faster than kd-tree (optionally), as fast as snap-points-2d
-* allow appending/removing points (optionally)
-* splatting by zoom layers as snap-points-2d
-* no memory overuse
-* adding points
-* keeping visible points in reclustering
+[DEMO](https://github.com/dfcreative/point-cluster)
+
+
+## Canvas2D example
 
 ```js
 const cluster = require('point-cluster')
+const context = require('get-canvas-context')('2d')
+document.body.appendChild(context.canvas)
+
+
+// create 1 million 2d points
+let coords = Array.from({length: 1000000 * 2}, Math.random)
 
 // build a tree
-let tree = cluster(points)
+let points = cluster(coords)
 
+// data range
+let range = [0.1, 0.1, .8, .8]
 
+// current pixel size
+let pixelSize = (range[2] - range[0]) / context.width
+
+// show only levels corresponding to
+let lod = points.levels(pixelSize, range)
+
+// render only points actually visible on the screen
+for (let level = 0; level < lod.length; level++) {
+	let [from, to] = points.levels
+	render(level[0], level[1])
+}
+
+// draw points corresponding to the identifiers
+function render (ids, from, to) {
+	for (let i = from; i < to; i++) {
+		let x = points[i * 2]
+		let y = points[i * 2 + 1]
+		canvas.drawCircle(x, y)
+	}
+}
+```
+
+## WebGL example
+
+```js
 ```
 
 ## API
 
-### `index = cluster(points, options?)`
+### `points = cluster(coords, options?)`
 
-Create index tree for the set of points based on options.
+Create index tree for the set of 2d `coords` based on `options`.
 
-`points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` form.
+`points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` coordinates.
 
-`split` is a function with the signature:
-
-```js
-split(ids) {
-	//sort ids in the ascending group order first
-	...
-
-	//invoke done callbacks for every subgroup of ids need further secioning
-	split(ids.subarray(0, group1))
-	split(ids.subarray(group1, group2))
-	...
-	split(ids.subarray(groupN))
-}
-```
+#### `options`
 
 Option | Default | Description
 ---|---|---
-`data` | `{}` | Provides initial data for root node, like diam, center, data bounds etc.
-`traversal` | `'depth'` | `depth`-first or `breadth`-first order of tree sorting. First is a bit faster, second might be more useful for rendering applications as invokes `split` by levels.
-`nodeSize` | `1` | Min size of node, bigger values increase performance but may not be suitable for rendering
-`xsort` | `false` | Sort output cluster values by x-coordinate, can be useful for faster rendering (splatting, see snap-points-2d)
-`reverse` | `false` | Form layers based on last point from the set rather than the first. May be useful to preserve z-order of points
+`bounds` | `auto` | Data bounds, if different from `coords` bounds, eg. in case of subdata.
+`nodeSize` | `1` | Min size of node, ie. tree traversal is stopped once the node contains less than the indicated number of points.
+`sort` | `false` | Sort output cluster values by x-, y-coordinate or radius. By default is sorted in tree order (z-curve in case of quadtree). Can be useful for faster rendering.
+`levelPoint` | `'first'` | `'first'`, `'last'` or a function, returning point id for the level.
 
-### `tree.level(n)`
+### `points.levels`
 
-Get points belonging to a specific level.
+Point ids distributed by zoom levels of details. Handy to form a buffer in WebGL and use `points.lod` method to get subranges of buffer to render.
 
-### `tree.range([left, top, right, bottom])`
+### `points.closest(x, y, maxLevel=0)`
 
-Get set of points from the rectangular range.
+Get point id closest to the indicated `x, y` coordinates, optionally limited by the `maxLevel`.
 
-### `tree.radius([x, y], r)`
+### `points.range(minX, minY, maxX, maxY, maxLevel=0)`
 
-Get points within defined radius of a coordinate.
+Get point ids from the indicated range, optinally limited by the `maxLevel`.
+
+### `points.radius(x, y, r, maxLevel=0)`
+
+Return point ids within the radius `r` from `x, y` coordinates, optionally limited by `maxLevel`.
+
+### `points.offsets(minX, minY, maxX, maxY, maxLevel=0)`
+
+Get offsets for the points visible at a specific zoom level and range. Returns list of arrays corresponding to `points.levels` ranges, eg. `{1: [120, 200], 2: [1120, 1540], ...}`.
+
 
 
 ### Related
