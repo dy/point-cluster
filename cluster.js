@@ -2,7 +2,6 @@
 
 
 const getBounds = require('array-bounds')
-const parseRect = require('parse-rect')
 const pick = require('pick-by-alias')
 const defined = require('defined')
 
@@ -10,7 +9,7 @@ const defined = require('defined')
 module.exports = PointCluster
 
 function PointCluster(srcPoints, options) {
-  if (!this instanceof PointCluster) return new PointCluster(srcPoints, options)
+  if (!(this instanceof PointCluster)) return new PointCluster(srcPoints, options)
 
 
   // sort out options
@@ -34,10 +33,10 @@ function PointCluster(srcPoints, options) {
   if (bounds[0] === bounds[2]) bounds[2]++
   if (bounds[1] === bounds[3]) bounds[3]++
 
+  this.points = this.normalize(srcPoints, bounds)
 
   // init variables
-  let points = this.points = this.normalize(srcPoints, bounds)
-  let n = this.n = srcPoints.length >>> 1
+  let n = srcPoints.length >>> 1
   let ids = this.ids = Array(n)
   for (let i = 0; i < n; ++i) {
     ids[i] = i

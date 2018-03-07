@@ -29,7 +29,7 @@ function QuadCluster(coords, options) {
 	let groups = this.groups = []
 
 	let bounds = this.bounds
-	let diam = this.diam = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1])
+	this.diam = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1])
 
 	sort(0, 0, 1, this.ids, 0, 1)
 
@@ -125,7 +125,6 @@ QuadCluster.prototype.offsets = function (pxSize, lox, loy, hix, hiy) {
 	let diam = this.diam
 
 	for (let level = 0; level < this.levels.length; level++) {
-		let levelItems = this.levels[level]
 		let levelGroups = this.groups[level]
 		let levelPixelSize = diam * Math.pow(0.5, level)
 
