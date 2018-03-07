@@ -5,7 +5,7 @@ const cluster = require('./')
 const approxEqual = require('almost-equal')
 
 
-t('quad: snap-points-2d cases', t => {
+t.skip('quad: snap-points-2d cases', t => {
   function verifySnap(srcPoints) {
     let numPoints = srcPoints.length>>>1
 
@@ -89,7 +89,7 @@ t('quad: snap-points-2d cases', t => {
   t.end()
 })
 
-t('quad: linear case', t => {
+t.skip('quad: linear case', t => {
   let {levels, points, ids, weights} = cluster([1,1,2,2,3,3,4,4,5,5])
 
   t.deepEqual(ids, [2, 4, 1, 3, 0])
@@ -104,13 +104,13 @@ t('quad: linear case', t => {
   t.end()
 })
 
-t('quad: no arguments', t => {
+t.skip('quad: no arguments', t => {
   let levels = cluster([0,0, 1,1, 2,2])
 
   t.end()
 })
 
-t('quad: larger bounds', t => {
+t.skip('quad: larger bounds', t => {
   let pos = [0,0, 1,1, 2,2, 3,3, 4,4]
 
   let {levels} = cluster(pos.slice(), { bounds: [0,0,4,4] })
@@ -136,11 +136,25 @@ t('quad: larger bounds', t => {
 
 t('quad: offsets case', t => {
   let points = [.15,.8, .2,.15, .6,.6, .6,.45, .8,.1, .9,.6, .91,.61]
-  let index = cluster(points, {type: 'quad-bucket', bounds: [0,0,1,1]})
+  let index = cluster(points, {bounds: [0,0,1,1]})
+
+  t.deepEqual(index.levels, [
+    [0],
+    [1,3,2],
+    [4,5],
+    [6]
+  ])
+  console.log(index)
+
+  t.end()
 })
 
+t.skip('quad: group id', t => {
+  // TODO
+  t.end()
+})
 
-t('kd: creates an index', t => {
+t.skip('kd: creates an index', t => {
   var points = [
   54,1, 97,21, 65,35, 33,54, 95,39, 54,3, 53,54, 84,72, 33,34, 43,15, 52,83, 81,23, 1,61, 38,74,
   11,91, 24,56, 90,31, 25,57, 46,61, 29,69, 49,60, 4,98, 71,15, 60,25, 38,84, 52,38, 94,51, 13,25,
@@ -226,7 +240,7 @@ t.skip('kd: radius search', t => {
   t.end();
 })
 
-t.only('performance', t => {
+t.skip('performance', t => {
 	let N = 1e6
 	let points = new Float64Array(N)
   let ids = new Uint32Array(N)

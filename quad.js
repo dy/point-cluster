@@ -7,49 +7,53 @@
 'use strict'
 
 const PointCluster = require('./cluster')
+const search = require('binary-search-bounds')
+const clamp = require('clamp')
 
 module.exports = QuadCluster
 
-function QuadCluster(points, options) {
-	if (!(this instanceof QuadCluster)) return new QuadCluster(points, options)
+function QuadCluster(coords, options) {
+	if (!(this instanceof QuadCluster)) return new QuadCluster(coords, options)
 
-	PointCluster.call(this, points, options)
+	PointCluster.call(this, coords, options)
+
+	let points = this.points
 
 	// point indexes for levels [0: [a,b,c,d], 1: [a,b,c,d,e,f,...], ...]
-	let levels = []
+	let levels = this.levels = []
 
-	// offsets are starting indexes of subranges in sub levels
-	let offsets = []
+	// starting indexes of subranges in sub levels
+	let sublevels = this.sublevels = []
 
 	// keep track of cx/cy
-	let params = []
+	let groups = this.groups = []
 
-	// console.time('cluster')
+	let bounds = this.bounds
+	let diam = this.diam = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1])
+
 	sort(0, 0, 1, this.ids, 0, 1)
-	// console.timeEnd('cluster')
-	// console.log(levels, offsets)
 
-
-	function sort (x, y, diam, ids, level) {
+	// FIXME: it is possible to create one typed array heap and reuse that to avoid memory blow
+	function sort (x, y, diam, ids, level, group) {
 		if (!ids.length) return null
-
-		let d2 = diam * .5
-		let cx = x + d2, cy = y + d2
 
 		// save first point as level representative
 		let item = ids[0]
 		let levelItems = levels[level] || (levels[level] = [])
 		levelItems.push(item)
 
-		let paramItems = params[level] || (params[level] = [])
-		paramItems.push(cx, cy)
+		let levelGroups = groups[level] || (groups[level] = [])
+		levelGroups.push(group)
 
-		let offsetItems = offsets[level] || (offsets[level] = [])
+		let sublevel = sublevels[level] || (sublevels[level] = [])
 		let offset = levelItems.length - 1
 		if (ids.length <= 1) {
-			offsetItems.push(null, null, null, null)
+			sublevel.push(null, null, null, null)
 			return offset
 		}
+
+		let d2 = diam * .5
+		let cx = x + d2, cy = y + d2
 
 		// distribute points by 4 buckets
 		let lolo = [], lohi = [], hilo = [], hihi = []
@@ -62,11 +66,12 @@ function QuadCluster(points, options) {
 		}
 
 		level++
-		offsetItems.push(
-			sort(x, y, d2, lolo, level),
-			sort(x, cy, d2, lohi, level),
-			sort(cx, y, d2, hilo, level),
-			sort(cx, cy, d2, hihi, level)
+		group <<= 2
+		sublevel.push(
+			sort(x, y, d2, lolo, level, group),
+			sort(x, cy, d2, lohi, level, group + 1),
+			sort(cx, y, d2, hilo, level, group + 2),
+			sort(cx, cy, d2, hihi, level, group + 3)
 		)
 
 		return offset
@@ -75,43 +80,69 @@ function QuadCluster(points, options) {
 
 QuadCluster.prototype = Object.create(PointCluster.prototype)
 
-QuadCluster.prototype.closest = function (x, y, level=0) {
+QuadCluster.prototype.closest = function (x, y) {
 
 }
 
-QuadCluster.prototype.range = function (l, t, r, b, level=0) {
+QuadCluster.prototype.range = function (l, t, r, b) {
 
 }
 
-QuadCluster.prototype.radius = function (x, y, r, level=0) {
+QuadCluster.prototype.radius = function (x, y, r) {
 
 }
 
-QuadCluster.prototype.offsets = function (l, t, r, b, level=0) {
-	let [lox, loy, hix, hiy] = range
 
-	let diam = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1])
+// get group id closest to the x,y coordinate, corresponding to a level
+QuadCluster.prototype.group = function (realx, realy, level) {
+	let group = 1
 
-	for (let level = levels.length; level--;) {
-		let levelItems = levels[level]
+	let [x, y] = this.normalize([realx, realy], this.bounds)
 
+	x = clamp(x, 0, 1)
+	y = clamp(y, 0, 1)
+
+	let cx = .5, cy = .5
+	let diam = .5
+
+	for (let i = 0; i < level; i++) {
+		group <<= 2
+
+		group += x < cx ? (y < cy ? 0 : 1) : (y < cy ? 2 : 3)
+
+		diam *= .5
+
+		cx += x < cx ? -diam : diam
+		cy += y < cy ? -diam : diam
+	}
+
+	return group
+}
+
+
+QuadCluster.prototype.offsets = function (pxSize, lox, loy, hix, hiy) {
+	let offsets = []
+	let diam = this.diam
+
+	for (let level = 0; level < this.levels.length; level++) {
+		let levelItems = this.levels[level]
+		let levelGroups = this.groups[level]
 		let levelPixelSize = diam * Math.pow(0.5, level)
 
-		// FIXME: use minSize-adaptive coeff here, if makes sense, mb we need dist tho
-		if (levelPixelSize && levelPixelSize < currPixelSize && level > 1) {
+		if (levelPixelSize && levelPixelSize < pxSize) {
 			continue
 		}
 
-		let startOffset = search.ge(levelItems, range, (id, range) => {
-			let x = positions[id * 2]
-			let y = positions[id * 2 + 1]
-			let dx = x - range[0]
-			let dy = y - range[1]
-			return Math.max(dx, dy)
-		})
-		let endOffset = search.lt(x, range[2], startOffset, levelItems.length - 1) + 1
+		let levelGroupStart = this.group(lox, loy, level)
+		let levelGroupEnd = this.group(hix, hiy, level)
 
-		if (endOffset <= startOffset) continue
+		// FIXME: utilize sublevels to speed up search range here
+		let startOffset = search.ge(levelGroups, levelGroupStart)
+		let endOffset = search.lt(levelGroups, levelGroupEnd, startOffset, levelGroups.length - 1) + 1
+
+		offsets[level] = [startOffset, endOffset]
 	}
+
+	return offsets
 }
 

@@ -12,10 +12,6 @@ module.exports = PointCluster
 function PointCluster(srcPoints, options) {
   if (!this instanceof PointCluster) return new PointCluster(srcPoints, options)
 
-  // slice points
-  let n = this.n = srcPoints.length >>> 1
-  let points = this.points = new Float64Array(n * 2)
-
 
   // sort out options
   if (!options) options = {}
@@ -23,15 +19,15 @@ function PointCluster(srcPoints, options) {
 
   options = pick(options, {
     bounds: 'range bounds',
-    type: 'type kind split',
-    sort: 'sortBy sortby sort',
-    tail: 'tail reverse levelReverse reverseLevel tailFirst last',
+    // type: 'type kind split',
+    // sort: 'sortBy sortby sort',
+    // tail: 'tail reverse levelReverse reverseLevel tailFirst last',
     nodeSize: 'node nodeSize minNodeSize minSize size'
   })
 
-  this.type = defined(options.type, 'quad')
-  this.sort = defined(options.sort, 'x')
-  this.tail = defined(options.tail, false)
+  // this.type = defined(options.type, 'quad')
+  // this.sort = defined(options.sort, 'x')
+  // this.tail = defined(options.tail, false)
   this.nodeSize = defined(options.nodeSize, 0)
 
   let bounds = this.bounds = defined(options.bounds, getBounds(srcPoints, 2))
@@ -40,25 +36,14 @@ function PointCluster(srcPoints, options) {
 
 
   // init variables
+  let points = this.points = this.normalize(srcPoints, bounds)
+  let n = this.n = srcPoints.length >>> 1
   let ids = this.ids = Array(n)
   for (let i = 0; i < n; ++i) {
     ids[i] = i
   }
   // let weights = new Uint32Array(n)
   // let levels = new Uint8Array(n)
-  let lox = bounds[0]
-  let loy = bounds[1]
-  let hix = bounds[2]
-  let hiy = bounds[3]
-  let scaleX = 1.0 / (hix - lox)
-  let scaleY = 1.0 / (hiy - loy)
-  let diam = Math.max(hix - lox, hiy - loy)
-
-  // normalize points
-  for (let i = 0; i < n; i++) {
-    points[2*i]   = (srcPoints[2*i]   - lox) * scaleX
-    points[2*i+1] = (srcPoints[2*i+1] - loy) * scaleY
-  }
 
 
   /*
@@ -139,3 +124,20 @@ function PointCluster(srcPoints, options) {
   */
 }
 
+// return array with normalized points
+PointCluster.prototype.normalize = function(srcPoints, bounds) {
+  let lox = bounds[0]
+  let loy = bounds[1]
+  let hix = bounds[2]
+  let hiy = bounds[3]
+  let scaleX = 1.0 / (hix - lox)
+  let scaleY = 1.0 / (hiy - loy)
+  let result = new Array(srcPoints.length)
+
+  for (let i = 0, n = srcPoints.length / 2; i < n; i++) {
+    result[2*i]   = (srcPoints[2*i]   - lox) * scaleX
+    result[2*i+1] = (srcPoints[2*i+1] - loy) * scaleY
+  }
+
+  return result
+}
