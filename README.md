@@ -3,14 +3,14 @@
 Point clustering for data visualization purposes. Useful for Canvas2D, SVG or WebGL scatter plots.
 
 * [ ] quad-tree, kd-tree, ann-tree and other tree types.
-* [ ] splatting by zoom layers.
-* [ ] point selection/hover by range.
+* [x] splatting by zoom layers.
+* [x] point selection/hover by range.
 * [ ] point radius and weight.
 * [ ] reverse z-index order mode to keep visible points in reclustering.
-* [ ] appending/removing points (optionally).
-* [ ] no visually noticeable clustering artifacts.
-* [ ] high performance (faster than [snap-points-2d](https://github.com/gl-vis/snap-points-2d)).
-* [ ] no memory overuse.
+* [ ] appending/removing points.
+* [x] no visually noticeable clustering artifacts.
+* [x] high performance (faster than [snap-points-2d](https://github.com/gl-vis/snap-points-2d)).
+* [x] no memory overuse.
 
 [DEMO](https://github.com/dfcreative/point-cluster)
 
@@ -102,3 +102,10 @@ Get offsets for the points visible at a specific zoom level and range. Returns l
 
 * [snap-points-2d](https://github.com/gl-vis/snap-points-2d) — grouping points by pixels.
 * [kdgrass](https://github.com/dfcreative/kdgrass) — minimal kd-tree implementation.
+
+
+## License
+
+(c) 2017 Dmitry Yv. MIT License
+
+Development supported by [plot.ly](https://github.com/plotly/).
