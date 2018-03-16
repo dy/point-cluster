@@ -7,9 +7,6 @@
     "test": "node test",
     "build": "browserify demo.js -g bubleify | indexhtmlify | metadataify | github-cornerify > demo/index.html"
   },
-  "files": [
-    "dist"
-  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/dfcreative/point-cluster.git"
