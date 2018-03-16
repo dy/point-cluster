@@ -92,7 +92,6 @@ QuadCluster.prototype.radius = function (x, y, r) {
 
 }
 
-
 // get group id closest to the x,y coordinate, corresponding to a level
 QuadCluster.prototype.group = function (realx, realy, level) {
 	let group = 1
@@ -119,7 +118,7 @@ QuadCluster.prototype.group = function (realx, realy, level) {
 	return group
 }
 
-
+// get range offsets within levels to render lods appropriate for zoom level
 QuadCluster.prototype.offsets = function (pxSize, lox, loy, hix, hiy) {
 	let offsets = []
 	let diam = this.diam
@@ -137,7 +136,7 @@ QuadCluster.prototype.offsets = function (pxSize, lox, loy, hix, hiy) {
 
 		// FIXME: utilize sublevels to speed up search range here
 		let startOffset = search.ge(levelGroups, levelGroupStart)
-		let endOffset = search.lt(levelGroups, levelGroupEnd, startOffset, levelGroups.length - 1) + 1
+		let endOffset = search.le(levelGroups, levelGroupEnd, startOffset, levelGroups.length - 1) + 1
 
 		offsets[level] = [startOffset, endOffset]
 	}
