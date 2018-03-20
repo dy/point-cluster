@@ -123,6 +123,25 @@ function PointCluster(srcPoints, options) {
   */
 }
 
+
+// return points within range
+PointCluster.prototype.range = function () {
+  let box = rect(...arguments)
+}
+
+
+// return points closest to the coordinate
+PointCluster.prototype.closest = function (x, y) {
+
+}
+
+
+// return points whitnin radius r from the coordinate
+PointCluster.prototype.radius = function (x, y, r) {
+
+}
+
+
 // return array with normalized points
 PointCluster.prototype.normalize = function(srcPoints, bounds) {
   let lox = bounds[0]

@@ -9,6 +9,7 @@
 const PointCluster = require('./cluster')
 const search = require('binary-search-bounds')
 const clamp = require('clamp')
+const rect = require('parse-rect')
 
 module.exports = QuadCluster
 
@@ -22,10 +23,10 @@ function QuadCluster(coords, options) {
 	// point indexes for levels [0: [a,b,c,d], 1: [a,b,c,d,e,f,...], ...]
 	let levels = this.levels = []
 
-	// starting indexes of subranges in sub levels
+	// starting indexes of subranges in sub levels, levels.length * 4
 	let sublevels = this.sublevels = []
 
-	// keep track of cx/cy
+	// unique group ids, sorted in z-curve fashion within levels
 	let groups = this.groups = []
 
 	let bounds = this.bounds
@@ -78,14 +79,57 @@ function QuadCluster(coords, options) {
 	}
 }
 
+
 QuadCluster.prototype = Object.create(PointCluster.prototype)
+
 
 QuadCluster.prototype.closest = function (x, y) {
 
 }
 
-QuadCluster.prototype.range = function (l, t, r, b) {
+// get all points within box range
+QuadCluster.prototype.range = function () {
+	let { levels, sublevels, points } = this
 
+	let box = rect( ...arguments )
+	let [ minX, minY, maxX, maxY ] = this.normalize( [ box.x, box.y, box.x + box.width, box.y + box.height ], this.bounds )
+
+	let selection = []
+
+	select( 0, 0, 1, 0, 0 )
+
+	function select ( lox, loy, d, level, offset ) {
+		let hix = lox + d
+		let hiy = loy + d
+
+		// if box does not intersect level - ignore
+		if ( minX > hix || minY > hiy || maxX < lox || maxY < loy ) return
+		if (level >= levels.length) return
+
+		// if point falls into box range - take it
+		let ids = levels[level]
+		let id = ids[offset]
+		let px = points[ id * 2 ]
+		let py = points[ id * 2 + 1 ]
+
+		if ( px > minX && px < maxX && py > minY && py < maxY ) selection.push(id)
+
+		// for every subsection do select
+		let offsets = sublevels[level]
+		let off0 = offsets[ offset * 4 + 0 ]
+		let off1 = offsets[ offset * 4 + 1 ]
+		let off2 = offsets[ offset * 4 + 2 ]
+		let off3 = offsets[ offset * 4 + 3 ]
+
+		let d2 = d * .5
+		let nextLevel = level + 1
+		if ( off0 != null ) select( lox, loy, d2, nextLevel, off0)
+		if ( off1 != null ) select( lox, loy + d2, d2, nextLevel, off1)
+		if ( off2 != null ) select( lox + d2, loy, d2, nextLevel, off2)
+		if ( off3 != null ) select( lox + d2, loy + d2, d2, nextLevel, off3)
+	}
+
+	return selection
 }
 
 QuadCluster.prototype.radius = function (x, y, r) {
