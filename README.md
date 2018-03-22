@@ -1,7 +1,8 @@
 # point-cluster [![Build Status](https://travis-ci.org/dfcreative/point-cluster.svg?branch=master)](https://travis-ci.org/dfcreative/point-cluster)
 
-Point clustering for data visualization purposes. Useful for Canvas2D, SVG or WebGL scatter plots.
+Point clustering for 2D spatial indexing. Incorporates optimized quad-tree data structure.
 
+<!--
 * [ ] quad-tree, kd-tree, ann-tree and other tree types.
 * [x] splatting by zoom layers.
 * [x] point selection/hover by range.
@@ -13,50 +14,16 @@ Point clustering for data visualization purposes. Useful for Canvas2D, SVG or We
 * [x] no memory overuse.
 
 [DEMO](https://github.com/dfcreative/point-cluster)
+-->
 
-
-## Canvas2D example
 
 ```js
 const cluster = require('point-cluster')
-const context = require('get-canvas-context')('2d')
-document.body.appendChild(context.canvas)
 
+let tree = cluster(points)
 
-// create 1 million 2d points
-let coords = Array.from({length: 1000000 * 2}, Math.random)
-
-// build a tree
-let points = cluster(coords)
-
-// data range
-let range = [0.1, 0.1, .8, .8]
-
-// current pixel size
-let pixelSize = (range[2] - range[0]) / context.width
-
-// show only levels corresponding to
-let lod = points.levels(pixelSize, range)
-
-// render only points actually visible on the screen
-for (let level = 0; level < lod.length; level++) {
-	let [from, to] = points.levels
-	render(level[0], level[1])
-}
-
-// draw points corresponding to the identifiers
-function render (ids, from, to) {
-	for (let i = from; i < to; i++) {
-		let x = points[i * 2]
-		let y = points[i * 2 + 1]
-		canvas.drawCircle(x, y)
-	}
-}
-```
-
-## WebGL example
-
-```js
+// get point ids within the indicated range
+let ids = tree.range(10, 10, 20, 20)
 ```
 
 ## API
@@ -72,25 +39,17 @@ Create index tree for the set of 2d `coords` based on `options`.
 Option | Default | Description
 ---|---|---
 `bounds` | `auto` | Data bounds, if different from `coords` bounds, eg. in case of subdata.
-`nodeSize` | `1` | Min size of node, ie. tree traversal is stopped once the node contains less than the indicated number of points.
-`sort` | `false` | Sort output cluster values by x-, y-coordinate or radius. By default is sorted in tree order (z-curve in case of quadtree). Can be useful for faster rendering.
-`levelPoint` | `'first'` | `'first'`, `'last'` or a function, returning point id for the level.
+<!-- `nodeSize` | `1` | Min size of node, ie. tree traversal is stopped once the node contains less than the indicated number of points. -->
+<!-- `sort` | `false` | Sort output cluster values by x-, y-coordinate or radius. By default is sorted in tree order (z-curve in case of quadtree). Can be useful for faster rendering. -->
+<!-- `levelPoint` | `'first'` | `'first'`, `'last'` or a function, returning point id for the level. -->
 
 ### `points.levels`
 
 Point ids distributed by zoom levels of details. Handy to form a buffer in WebGL and use `points.lod` method to get subranges of buffer to render.
 
-### `points.closest(x, y)`
-
-Get point id closest to the indicated `x, y` coordinates, optionally limited by the `maxLevel`.
-
 ### `points.range(minX, minY, maxX, maxY)`
 
 Get point ids from the indicated range, optinally limited by the `maxLevel`.
-
-### `points.radius(x, y, r)`
-
-Return point ids within the radius `r` from `x, y` coordinates, optionally limited by `maxLevel`.
 
 ### `points.offsets(pxSize, minX, minY, maxX, maxY)`
 
@@ -100,12 +59,13 @@ Get offsets for the points visible at a specific zoom level and range. Returns l
 
 ### Related
 
-* [snap-points-2d](https://github.com/gl-vis/snap-points-2d) — grouping points by pixels.
-* [kdgrass](https://github.com/dfcreative/kdgrass) — minimal kd-tree implementation.
+* [snap-points-2d](https://github.com/gl-vis/snap-points-2d) − grouping points by pixels.
+* [kdgrass](https://github.com/dfcreative/kdgrass) − minimal kd-tree implementation.
+* [regl-scatter2d](https://github.com/dfreative/regl-scatter2d) − highly performant scatter plot.
 
 
 ## License
 
-(c) 2017 Dmitry Yv. MIT License
+© 2017 Dmitry Yv. MIT License
 
 Development supported by [plot.ly](https://github.com/plotly/).

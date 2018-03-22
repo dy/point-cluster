@@ -83,10 +83,6 @@ function QuadCluster(coords, options) {
 QuadCluster.prototype = Object.create(PointCluster.prototype)
 
 
-QuadCluster.prototype.closest = function (x, y) {
-
-}
-
 // get all points within box range
 QuadCluster.prototype.range = function () {
 	let { levels, sublevels, points } = this
@@ -132,9 +128,6 @@ QuadCluster.prototype.range = function () {
 	return selection
 }
 
-QuadCluster.prototype.radius = function (x, y, r) {
-
-}
 
 // get group id closest to the x,y coordinate, corresponding to a level
 QuadCluster.prototype.group = function (realx, realy, level) {
