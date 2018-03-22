@@ -1,5 +1,5 @@
 /**
- * @module  point-cluster/quad-bucket
+ * @module  point-cluster/quad
  *
  * Bucket based clustering
  */
@@ -156,7 +156,7 @@ QuadCluster.prototype.group = function (realx, realy, level) {
 }
 
 // get range offsets within levels to render lods appropriate for zoom level
-QuadCluster.prototype.offsets = function (pxSize, lox, loy, hix, hiy) {
+QuadCluster.prototype.lod = function (pxSize, lox, loy, hix, hiy) {
 	let offsets = []
 	let diam = this.diam
 

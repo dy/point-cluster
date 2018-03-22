@@ -41,9 +41,6 @@ function PointCluster(srcPoints, options) {
   for (let i = 0; i < n; ++i) {
     ids[i] = i
   }
-  // let weights = new Uint32Array(n)
-  // let levels = new Uint8Array(n)
-
 
   /*
   // use x-sort if required
@@ -79,54 +76,12 @@ function PointCluster(srcPoints, options) {
     weights = sortedWeights
   }
 
-
-  // form levels of details
-  let lod         = []
-  let lastLevel   = 0
-  let prevOffset  = n
-  for(let ptr = n - 1; ptr >= 0; --ptr) {
-    let level = levels[ptr]
-    if(level === lastLevel) continue
-
-    lod.push({
-      pixelSize: diam * Math.pow(0.5, level),
-      offset: ptr + 1,
-      count: prevOffset - (ptr + 1)
-    })
-    prevOffset = ptr+1
-
-    lastLevel = level
-  }
-  lod.push({
-    pixelSize: diam * Math.pow(0.5, levels[0] + 1),
-    offset: 0,
-    count: prevOffset
-  })
-
-
-  // get points within radius of the point
-  function radius (xy, r) {
-
-  }
-
-  // get points within the range
-  function range () {
-    let {x, y, width, height} = parseRect(...arguments)
-
-    // get down by levels
-  }
-
-  // get points belonging to the indicated level
-  function level (size) {
-
-  }
   */
 }
 
 
 // return points within range
 PointCluster.prototype.range = function () {
-  let box = rect(...arguments)
 }
 
 

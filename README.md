@@ -49,11 +49,11 @@ Point ids distributed by zoom levels of details. Handy to form a buffer in WebGL
 
 ### `points.range(minX, minY, maxX, maxY)`
 
-Get point ids from the indicated range, optinally limited by the `maxLevel`.
+Get point ids from the indicated range.
 
-### `points.offsets(pxSize, minX, minY, maxX, maxY)`
+### `points.lod(pxSize, minX, minY, maxX, maxY)`
 
-Get offsets for the points visible at a specific zoom level and range. Returns list of arrays corresponding to `points.levels` ranges, eg. `{1: [120, 200], 2: [1120, 1540], ...}`. Useful for obtaining subranges to rerender.
+Get offsets for the points visible at a specific zoom level and range. Returns list of arrays corresponding to `points.levels` ranges, eg. `[[120, 200], [1120, 1540], ...]`. Useful for obtaining subranges to render.
 
 
 
