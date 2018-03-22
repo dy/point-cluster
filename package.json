@@ -1,6 +1,6 @@
 {
   "name": "point-cluster",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "Fast nd point clustering.",
   "main": "quad.js",
   "scripts": {
