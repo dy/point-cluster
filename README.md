@@ -23,46 +23,58 @@ const cluster = require('point-cluster')
 let ids = cluster(points)
 
 // get point ids within the indicated range
-let selected = ids.range(10, 10, 20, 20)
+let selectedIds = ids.range([10, 10, 20, 20])
+
+// get levels of details: list of ids subranges for rendering purposes
+let lod = ids.range([10, 10, 20, 20], { lod: true })
 ```
 
 ## API
 
-### `tree = cluster(points, options?)`
+### `ids = cluster(points, options?)`
 
-Create index tree for the set of 2d `points` based on `options`.
+Create index for the set of 2d `points` based on `options`.
 
 `points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` coordinates.
+
+`ids` is _Uint32Array_ with point ids sorted by zoom levels, suitable for WebGL buffer, subranging or alike.
 
 #### `options`
 
 Option | Default | Description
 ---|---|---
-`bounds` | `auto` | Data bounds, if different from `coords` bounds, eg. in case of subdata.
-`maxDepth` | `8192` | Max number of levels.
-<!-- `nodeSize` | `1` | Min size of node, ie. tree traversal is stopped once the node contains less than the indicated number of points. -->
-<!-- `sort` | `false` | Sort output cluster values by x-, y-coordinate or radius. By default is sorted in tree order (z-curve in case of quadtree). Can be useful for faster rendering. -->
-<!-- `levelPoint` | `'first'` | `'first'`, `'last'` or a function, returning point id for the level. -->
+`bounds` | `auto` | Data bounds, if different from `points` bounds, eg. in case of subdata.
+`depth` | `256` | Max number of levels. Points below the indicated level are grouped into single level.
+<!-- `node` | `1` | Min size of node, ie. tree traversal is stopped once the node contains less than the indicated number of points. -->
+<!-- `sort` | `'z'` | Sort values within levels by `x`-, `y`-coordinate, `z`-curve or `r` - point radius. `z` is the fastest for init, `x` or `y` are faster for `lod` and `r` is the most data-relevant. -->
+<!-- `pick` | `'first'` | `'first'`, `'last'` or a function, returning point id for the level. -->
 
-### `tree.ids`, `tree.levels`
 
-Point ids distributed by zoom levels of details. Handy to form a buffer in WebGL and use `tree.lod` method to get subranges of buffer to render.
-
-### `tree.range(minX, minY, maxX, maxY)`
+### `result = ids.range(box?, options?)`
 
 Get point ids from the indicated range.
 
-### `tree.lod(pxSize, minX, minY, maxX, maxY)`
+`box` can be any rectangle format, eg. `[l, t, r, b]`, see [parse-rect](https://github.com/dfcreative/parse-rect).
 
-Get offsets for the points visible at a specific zoom level and range. Returns list of arrays corresponding to `points.levels` ranges, eg. `[[120, 200], [1120, 1540], ...]`. Useful for obtaining subranges to render.
+`options.lod` makes result contain list of level details instead of ids, useful for obtaining subranges to render.
 
+`options.d` can indicate the pixel size (number or a `w, h` couple) to search for, to ignore lower levels. Alternately, `options.level` can limit max level.
+
+```js
+let levels = ids.range([0,0, 100, 100], { lod: true, d: zoom / canvas.width })
+
+levels.forEach([from, to] => {
+	// offset and count point to range in `ids` array
+	render( ids.subarray( from, to ) )
+})
+```
 
 
 ### Related
 
 * [snap-points-2d](https://github.com/gl-vis/snap-points-2d) − grouping points by pixels.
 * [kdgrass](https://github.com/dfcreative/kdgrass) − minimal kd-tree implementation.
-* [regl-scatter2d](https://github.com/dfreative/regl-scatter2d) − highly performant scatter plot.
+* [regl-scatter2d](https://github.com/dfreative/regl-scatter2d) − highly performant scatter2d plot.
 
 
 ## License

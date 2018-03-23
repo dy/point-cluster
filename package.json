@@ -2,7 +2,7 @@
   "name": "point-cluster",
   "version": "2.2.0",
   "description": "Fast nd point clustering.",
-  "main": "quad.js",
+  "main": "index.js",
   "scripts": {
     "test": "node test",
     "build": "browserify demo.js -g bubleify | indexhtmlify | metadataify | github-cornerify > demo/index.html"
@@ -45,6 +45,8 @@
     "binary-search-bounds": "^2.0.4",
     "bubleify": "^1.1.0",
     "clamp": "^1.0.1",
+    "flatten-vertex-data": "^1.0.0",
+    "is-obj": "^1.0.1",
     "parse-rect": "^1.2.0"
   },
   "devDependencies": {

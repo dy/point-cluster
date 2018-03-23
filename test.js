@@ -16,10 +16,12 @@ t('quad: offsets case', t => {
     [6]
   ])
 
+  t.deepEqual(index.subarray(), [0, 1,3,2, 4,5, 6])
+
   t.end()
 })
 
-t('quad: stack overflow', t => {
+t('quad: max depth', t => {
   let points = []
 
   for (let i = 0; i < 1e4; i++) {
@@ -27,6 +29,15 @@ t('quad: stack overflow', t => {
   }
 
   let index = cluster(points)
+
+  t.end()
+})
+
+t('quad: lod method', t => {
+  let points = [0,0, 1,1, 2,2, 3,3, 4,4, 5,5, 6,6, 7,7]
+
+  let index = cluster(points)
+  t.deepEqual(index.range({lod: true}), [[0,1], [0,2], [0,3], [0,2]])
 
   t.end()
 })

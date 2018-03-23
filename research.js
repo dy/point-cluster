@@ -123,3 +123,40 @@ function data(N=1e6, f) {
 	return points
 }
 
+
+
+/*
+// use x-sort if required
+if (options.sort) {
+// pack levels: uint8, x-coord: uint16 and id: uint32 to float64
+let packed = new Float64Array(n)
+let packedInt = new Uint32Array(packed.buffer)
+for (let i = 0; i < n; i++) {
+  packedInt[i * 2] = i
+  packedInt[i * 2 + 1] = (0x3ff00000 & (levels[i] << 20) | 0x0000ffff & ((1 - points[i * 2]) * 0xffff))
+}
+
+// do native sort
+packed.sort()
+
+// unpack data back
+let sortedLevels = new Uint8Array(n)
+let sortedWeights = new Uint32Array(n)
+let sortedIds = new Uint32Array(n)
+let sortedPoints = new Float64Array(n * 2)
+for (let i = 0; i < n; i++) {
+  let id = packedInt[(n - i - 1) * 2]
+  sortedLevels[i] = levels[id]
+  sortedWeights[i] = weights[id]
+  sortedIds[i] = ids[id]
+  sortedPoints[i * 2] = points[id * 2]
+  sortedPoints[i * 2 + 1] = points[id * 2 + 1]
+}
+
+ids = sortedIds
+levels = sortedLevels
+points = sortedPoints
+weights = sortedWeights
+}
+
+*/
