@@ -20,17 +20,17 @@ Point clustering for 2D spatial indexing. Incorporates optimized quad-tree data 
 ```js
 const cluster = require('point-cluster')
 
-let tree = cluster(points)
+let ids = cluster(points)
 
 // get point ids within the indicated range
-let ids = tree.range(10, 10, 20, 20)
+let selected = ids.range(10, 10, 20, 20)
 ```
 
 ## API
 
-### `points = cluster(coords, options?)`
+### `tree = cluster(points, options?)`
 
-Create index tree for the set of 2d `coords` based on `options`.
+Create index tree for the set of 2d `points` based on `options`.
 
 `points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` coordinates.
 
@@ -44,15 +44,15 @@ Option | Default | Description
 <!-- `sort` | `false` | Sort output cluster values by x-, y-coordinate or radius. By default is sorted in tree order (z-curve in case of quadtree). Can be useful for faster rendering. -->
 <!-- `levelPoint` | `'first'` | `'first'`, `'last'` or a function, returning point id for the level. -->
 
-### `points.levels`
+### `tree.ids`, `tree.levels`
 
-Point ids distributed by zoom levels of details. Handy to form a buffer in WebGL and use `points.lod` method to get subranges of buffer to render.
+Point ids distributed by zoom levels of details. Handy to form a buffer in WebGL and use `tree.lod` method to get subranges of buffer to render.
 
-### `points.range(minX, minY, maxX, maxY)`
+### `tree.range(minX, minY, maxX, maxY)`
 
 Get point ids from the indicated range.
 
-### `points.lod(pxSize, minX, minY, maxX, maxY)`
+### `tree.lod(pxSize, minX, minY, maxX, maxY)`
 
 Get offsets for the points visible at a specific zoom level and range. Returns list of arrays corresponding to `points.levels` ranges, eg. `[[120, 200], [1120, 1540], ...]`. Useful for obtaining subranges to render.
 
