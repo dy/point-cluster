@@ -32,12 +32,18 @@
     "vis",
     "gl-vis"
   ],
+  "browserify": {
+    "transform": [
+      "bubleify"
+    ]
+  },
   "author": "Dmitry Yv <df.creative@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "array-bounds": "^1.0.1",
     "array-normalize": "^1.1.3",
     "binary-search-bounds": "^2.0.4",
+    "bubleify": "^1.1.0",
     "clamp": "^1.0.1",
     "parse-rect": "^1.2.0"
   },
