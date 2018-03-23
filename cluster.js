@@ -27,7 +27,9 @@ function PointCluster(srcPoints, options) {
   // this.type = defined(options.type, 'quad')
   // this.sort = defined(options.sort, 'x')
   // this.tail = defined(options.tail, false)
-  this.nodeSize = defined(options.nodeSize, 0)
+  this.nodeSize = defined(options.nodeSize, 1)
+
+  this.maxDepth = defined(options.maxDepth, 256)
 
   let bounds = this.bounds = defined(options.bounds, getBounds(srcPoints, 2))
   if (bounds[0] === bounds[2]) bounds[2]++

@@ -32,26 +32,41 @@ function QuadCluster(coords, options) {
 	let bounds = this.bounds
 	this.diam = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1])
 
+	let nodeSize = this.nodeSize
+	let maxDepth = this.maxDepth
+
 	sort(0, 0, 1, this.ids, 0, 1)
+
 
 	// FIXME: it is possible to create one typed array heap and reuse that to avoid memory blow
 	function sort (x, y, diam, ids, level, group) {
 		if (!ids.length) return null
 
 		// save first point as level representative
-		let item = ids[0]
 		let levelItems = levels[level] || (levels[level] = [])
-		levelItems.push(item)
-
 		let levelGroups = groups[level] || (groups[level] = [])
-		levelGroups.push(group)
-
 		let sublevel = sublevels[level] || (sublevels[level] = [])
 		let offset = levelItems.length - 1
+
+		// max depth reached - put all items into a first group
+		if (level > maxDepth) {
+			for (let i = 0; i < ids.length; i++) {
+				levelItems.push(ids[0])
+				levelGroups.push(group)
+				sublevel.push(null, null, null, null)
+			}
+
+			return offset
+		}
+
+		levelItems.push(ids[0])
+		levelGroups.push(group)
+
 		if (ids.length <= 1) {
 			sublevel.push(null, null, null, null)
 			return offset
 		}
+
 
 		let d2 = diam * .5
 		let cx = x + d2, cy = y + d2
@@ -156,6 +171,7 @@ QuadCluster.prototype.group = function (realx, realy, level) {
 }
 
 // get range offsets within levels to render lods appropriate for zoom level
+// TODO: it is possible to store minSize of a point and increase pxSize by that number
 QuadCluster.prototype.lod = function (pxSize, lox, loy, hix, hiy) {
 	let offsets = []
 	let diam = this.diam

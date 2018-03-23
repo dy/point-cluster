@@ -5,6 +5,32 @@ const cluster = require('./')
 const approxEqual = require('almost-equal')
 
 
+t('quad: offsets case', t => {
+  let points = [.15,.8, .2,.15, .6,.6, .6,.45, .8,.1, .9,.6, .91,.61]
+  let index = cluster(points, {bounds: [0,0,1,1]})
+
+  t.deepEqual(index.levels, [
+    [0],
+    [1,3,2],
+    [4,5],
+    [6]
+  ])
+
+  t.end()
+})
+
+t('quad: stack overflow', t => {
+  let points = []
+
+  for (let i = 0; i < 1e4; i++) {
+    points.push(0, 0)
+  }
+
+  let index = cluster(points)
+
+  t.end()
+})
+
 t.skip('quad: snap-points-2d cases', t => {
   function verifySnap(srcPoints) {
     let numPoints = srcPoints.length>>>1
@@ -32,8 +58,6 @@ t.skip('quad: snap-points-2d cases', t => {
       let r = s.pixelSize
       let offs  = s.offset
       let count = s.count
-
-      console.log('level=', i, r, offs, count)
 
       if(i > 0) {
         t.equals(offs+count, levels[i-1].offset, 'offset for ' + i)
@@ -134,21 +158,6 @@ t.skip('quad: larger bounds', t => {
   t.end()
 })
 
-t('quad: offsets case', t => {
-  let points = [.15,.8, .2,.15, .6,.6, .6,.45, .8,.1, .9,.6, .91,.61]
-  let index = cluster(points, {bounds: [0,0,1,1]})
-
-  t.deepEqual(index.levels, [
-    [0],
-    [1,3,2],
-    [4,5],
-    [6]
-  ])
-  console.log(index)
-
-  t.end()
-})
-
 t.skip('quad: group id', t => {
   // TODO
   t.end()
@@ -240,7 +249,7 @@ t.skip('kd: radius search', t => {
   t.end();
 })
 
-t.skip('performance', t => {
+t('performance', t => {
 	let N = 1e6
 	let points = new Float64Array(N)
   let ids = new Uint32Array(N)

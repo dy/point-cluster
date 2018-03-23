@@ -39,6 +39,7 @@ Create index tree for the set of 2d `coords` based on `options`.
 Option | Default | Description
 ---|---|---
 `bounds` | `auto` | Data bounds, if different from `coords` bounds, eg. in case of subdata.
+`maxDepth` | `8192` | Max number of levels.
 <!-- `nodeSize` | `1` | Min size of node, ie. tree traversal is stopped once the node contains less than the indicated number of points. -->
 <!-- `sort` | `false` | Sort output cluster values by x-, y-coordinate or radius. By default is sorted in tree order (z-curve in case of quadtree). Can be useful for faster rendering. -->
 <!-- `levelPoint` | `'first'` | `'first'`, `'last'` or a function, returning point id for the level. -->
