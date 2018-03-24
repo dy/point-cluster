@@ -22,7 +22,7 @@ const cluster = require('point-cluster')
 
 let ids = cluster(points)
 
-// get point ids within the indicated range
+// get point ids in the indicated range
 let selectedIds = ids.range([10, 10, 20, 20])
 
 // get levels of details: list of ids subranges for rendering purposes
@@ -35,15 +35,14 @@ let lod = ids.range([10, 10, 20, 20], { lod: true })
 
 Create index for the set of 2d `points` based on `options`.
 
-`points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` coordinates.
-
-`ids` is _Uint32Array_ with point ids sorted by zoom levels, suitable for WebGL buffer, subranging or alike.
+* `points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` coordinates.
+* `ids` is _Uint32Array_ with point ids sorted by zoom levels, suitable for WebGL buffer, subranging or alike.
 
 #### `options`
 
 Option | Default | Description
 ---|---|---
-`bounds` | `auto` | Data bounds, if different from `points` bounds, eg. in case of subdata.
+`bounds` | `'auto'` | Data range, if different from `points` bounds, eg. in case of subdata.
 `depth` | `256` | Max number of levels. Points below the indicated level are grouped into single level.
 <!-- `node` | `1` | Min size of node, ie. tree traversal is stopped once the node contains less than the indicated number of points. -->
 <!-- `sort` | `'z'` | Sort values within levels by `x`-, `y`-coordinate, `z`-curve or `r` - point radius. `z` is the fastest for init, `x` or `y` are faster for `lod` and `r` is the most data-relevant. -->
@@ -54,11 +53,15 @@ Option | Default | Description
 
 Get point ids from the indicated range.
 
-`box` can be any rectangle format, eg. `[l, t, r, b]`, see [parse-rect](https://github.com/dfcreative/parse-rect).
+* `box` can be any rectangle object, eg. `[l, t, r, b]`, see [parse-rect](https://github.com/dfcreative/parse-rect).
 
-`options.lod` makes result contain list of level details instead of ids, useful for obtaining subranges to render.
+#### `options`
 
-`options.d` can indicate the pixel size (number or a `w, h` couple) to search for, to ignore lower levels. Alternately, `options.level` can limit max level.
+Option | Default | Description
+---|---|---
+`lod` | `false` | Makes result a list of level details instead of ids, useful for obtaining subranges to render.
+`d` | `0` | Min pixel size (number or `[width, height]` couple) to search for, to ignore lower levels.
+`level` | `null` | Max level to limit search.
 
 ```js
 let levels = ids.range([0,0, 100, 100], { lod: true, d: dataRange / canvas.width })
