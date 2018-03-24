@@ -37,9 +37,7 @@ Create index for the set of 2d `points` based on `options`.
 
 * `points` is an array of `[x,y, x,y, ...]` or `[[x,y], [x,y], ...]` coordinates.
 * `ids` is _Uint32Array_ with point ids sorted by zoom levels, suitable for WebGL buffer, subranging or alike.
-
-#### `options`
-
+* `options`
 Option | Default | Description
 ---|---|---
 `bounds` | `'auto'` | Data range, if different from `points` bounds, eg. in case of subdata.
@@ -48,15 +46,15 @@ Option | Default | Description
 <!-- `sort` | `'z'` | Sort values within levels by `x`-, `y`-coordinate, `z`-curve or `r` - point radius. `z` is the fastest for init, `x` or `y` are faster for `lod` and `r` is the most data-relevant. -->
 <!-- `pick` | `'first'` | `'first'`, `'last'` or a function, returning point id for the level. -->
 
+---
+
 
 ### `result = ids.range(box?, options?)`
 
 Get point ids from the indicated range.
 
 * `box` can be any rectangle object, eg. `[l, t, r, b]`, see [parse-rect](https://github.com/dfcreative/parse-rect).
-
-#### `options`
-
+* `options`
 Option | Default | Description
 ---|---|---
 `lod` | `false` | Makes result a list of level details instead of ids, useful for obtaining subranges to render.
