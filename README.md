@@ -1,4 +1,4 @@
-# point-cluster [![Build Status](https://travis-ci.org/dfcreative/point-cluster.svg?branch=master)](https://travis-ci.org/dfcreative/point-cluster) [![experimental](https://img.shields.io/badge/stability-experimental-red.svg)](http://github.com/badges/stability-badges)
+# point-cluster [![Build Status](https://travis-ci.org/dfcreative/point-cluster.svg?branch=master)](https://travis-ci.org/dfcreative/point-cluster) [![experimental](https://img.shields.io/badge/stability-experimental-yellow.svg)](http://github.com/badges/stability-badges)
 
 Point clustering for 2D spatial indexing. Incorporates optimized quad-tree data structure.
 
@@ -61,7 +61,7 @@ Get point ids from the indicated range.
 `options.d` can indicate the pixel size (number or a `w, h` couple) to search for, to ignore lower levels. Alternately, `options.level` can limit max level.
 
 ```js
-let levels = ids.range([0,0, 100, 100], { lod: true, d: zoom / canvas.width })
+let levels = ids.range([0,0, 100, 100], { lod: true, d: dataRange / canvas.width })
 
 levels.forEach([from, to] => {
 	// offset and count point to range in `ids` array

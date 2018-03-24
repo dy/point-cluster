@@ -25,10 +25,10 @@ module.exports = function cluster (srcPoints, options) {
 		maxDepth: 'depth maxDepth maxdepth level maxLevel maxlevel levels',
 		// sort: 'sortBy sortby sort',
 		// pick: 'pick levelPoint',
-		nodeSize: 'node nodeSize minNodeSize minSize size'
+		// nodeSize: 'node nodeSize minNodeSize minSize size'
 	})
 
-	let nodeSize = defined(options.nodeSize, 1)
+	// let nodeSize = defined(options.nodeSize, 1)
 	let maxDepth = defined(options.maxDepth, 255)
 	let bounds = defined(options.bounds, getBounds(srcPoints, 2))
 	if (bounds[0] === bounds[2]) bounds[2]++
@@ -55,7 +55,6 @@ module.exports = function cluster (srcPoints, options) {
 
 	// sort points
 	sort(0, 0, 1, ids, 0, 1)
-
 
 	// FIXME: it is possible to create one typed array heap and reuse that to avoid memory blow
 	function sort (x, y, diam, ids, level, group) {
@@ -113,14 +112,115 @@ module.exports = function cluster (srcPoints, options) {
 		return offset
 	}
 
+	// get all points within the passed range
+	function range ( ...args ) {
+		let options
+
+		if (isObj(args[args.length - 1])) {
+			let arg = args.pop()
+
+			// detect if that was a rect object
+			if (!args.length && (arg.x != null || arg.l != null || arg.left != null)) {
+				args = [arg]
+				options = {}
+			}
+
+			options = pick(arg, {
+				level: 'level maxLevel',
+				d: 'd diam diameter r radius px pxSize pixel pixelSize maxD size minSize',
+				lod: 'lod details ranges offsets'
+			})
+		}
+		else {
+			options = {}
+		}
+
+		if (!args.length) args = bounds
+
+		let box = rect( ...args )
+
+		let [minX, minY, maxX, maxY] = normalize( [ box.x, box.y, box.x + box.width, box.y + box.height ], bounds )
+
+		let maxLevel = defined(options.level, levels.length)
+
+		// limit maxLevel by px size
+		if (options.d != null) {
+			let d
+			if (typeof options.d === 'number') d = [options.d, options.d]
+			else if (options.d.length) d = options.d
+
+			maxLevel = Math.min(
+				Math.ceil(-Math.log2(d[0] / (bounds[2] - bounds[0]))),
+				Math.ceil(-Math.log2(d[1] / (bounds[3] - bounds[1]))),
+				maxLevel
+			)
+		}
+
+		// return levels of details
+		if (options.lod) return lod(minX, minY, maxX, maxY, maxLevel)
+
+		let selection = []
+
+		select( 0, 0, 1, 0, 0 )
+
+		function select ( lox, loy, d, level, offset ) {
+			let hix = lox + d
+			let hiy = loy + d
+
+			// if box does not intersect level - ignore
+			if ( minX > hix || minY > hiy || maxX < lox || maxY < loy ) return
+			if ( level >= maxLevel ) return
+
+			// if point falls into box range - take it
+			let id = ids[levels[level][0]]
+			let px = points[ id * 2 ]
+			let py = points[ id * 2 + 1 ]
+
+			if ( px > minX && px < maxX && py > minY && py < maxY ) selection.push(id)
+
+			// for every subsection do select
+			let offsets = sublevels[level]
+			let off0 = offsets[ offset * 4 + 0 ]
+			let off1 = offsets[ offset * 4 + 1 ]
+			let off2 = offsets[ offset * 4 + 2 ]
+			let off3 = offsets[ offset * 4 + 3 ]
+
+			let d2 = d * .5
+			let nextLevel = level + 1
+			if ( off0 != null ) select( lox, loy, d2, nextLevel, off0)
+			if ( off1 != null ) select( lox, loy + d2, d2, nextLevel, off1)
+			if ( off2 != null ) select( lox + d2, loy, d2, nextLevel, off2)
+			if ( off3 != null ) select( lox + d2, loy + d2, d2, nextLevel, off3)
+		}
+
+		return selection
+	}
+
+	// get range offsets within levels to render lods appropriate for zoom level
+	// TODO: it is possible to store minSize of a point to optimize neede level calc
+	function lod (lox, loy, hix, hiy, maxLevel) {
+		let offsets = []
+
+		for (let level = 0; level < maxLevel; level++) {
+			let levelGroups = groups[level]
+			let [from, to] = levels[level]
+
+			let levelGroupStart = group(lox, loy, level)
+			let levelGroupEnd = group(hix, hiy, level)
+
+			// FIXME: utilize sublevels to speed up search range here
+			let startOffset = search.ge(levelGroups, levelGroupStart)
+			let endOffset = search.gt(levelGroups, levelGroupEnd, startOffset, levelGroups.length - 1)
+
+			offsets[level] = [startOffset + from, endOffset + from]
+		}
+
+		return offsets
+	}
+
 	// get group id closest to the x,y coordinate, corresponding to a level
-	function group (realx, realy, level) {
+	function group (x, y, level) {
 		let group = 1
-
-		let [x, y] = normalize([realx, realy], bounds)
-
-		x = clamp(x, 0, 1)
-		y = clamp(y, 0, 1)
 
 		let cx = .5, cy = .5
 		let diam = .5
@@ -139,126 +239,15 @@ module.exports = function cluster (srcPoints, options) {
 		return group
 	}
 
-	// get all points within the passed range
-	function range ( ...args ) {
-		let options
-		if (isObj(args[args.length - 1])) {
-			let arg = args.pop()
-
-			// detect if that was a rect object
-			if (!args.length && (arg.x != null || arg.l != null || arg.left != null)) {
-				args = [arg]
-				options = {}
-			}
-
-			options = pick(arg, {
-				level: 'level maxLevel',
-				d: 'd diam diameter r maxD px size minSize pxSize pixel pixelSize',
-				lod: 'lod details ranges offsets'
-			})
-		}
-		else {
-			options = {}
-		}
-
-		if (!args.length) args = bounds
-
-		let box = rect( args )
-
-		let maxLevel = defined(options.level, levels.length)
-
-		// limit maxLevel by px size
-		if (options.d != null) {
-			let d
-			if (typeof options.d === 'number') d = [options.d, options.d]
-			else if (options.d.length) d = options.d
-
-			maxLevel = Math.min(
-				Math.floor(-Math.log2((bounds[2] - bounds[0]) / d[0])),
-				Math.floor(-Math.log2((bounds[3] - bounds[1]) / d[1])),
-				maxLevel
-			)
-		}
-
-		// return levels of details
-		if (options.lod) return lod(box, maxLevel)
-
-		let [ minX, minY, maxX, maxY ] = normalize( [ box.x, box.y, box.x + box.width, box.y + box.height ], bounds )
-
-		let selection = []
-
-		select( 0, 0, 1, 0, 0 )
-
-		return selection
-	}
-
-	function select ( selection, lox, loy, d, level, offset ) {
-		let hix = lox + d
-		let hiy = loy + d
-
-		// if box does not intersect level - ignore
-		if ( minX > hix || minY > hiy || maxX < lox || maxY < loy ) return
-		if (level >= levels.length) return
-
-		// if point falls into box range - take it
-		let ids = levels[level]
-		let id = ids[offset]
-		let px = points[ id * 2 ]
-		let py = points[ id * 2 + 1 ]
-
-		if ( px > minX && px < maxX && py > minY && py < maxY ) selection.push(id)
-
-		// for every subsection do select
-		let offsets = sublevels[level]
-		let off0 = offsets[ offset * 4 + 0 ]
-		let off1 = offsets[ offset * 4 + 1 ]
-		let off2 = offsets[ offset * 4 + 2 ]
-		let off3 = offsets[ offset * 4 + 3 ]
-
-		let d2 = d * .5
-		let nextLevel = level + 1
-		if ( off0 != null ) select( selection, lox, loy, d2, nextLevel, off0)
-		if ( off1 != null ) select( selection, lox, loy + d2, d2, nextLevel, off1)
-		if ( off2 != null ) select( selection, lox + d2, loy, d2, nextLevel, off2)
-		if ( off3 != null ) select( selection, lox + d2, loy + d2, d2, nextLevel, off3)
-	}
-
-	// get range offsets within levels to render lods appropriate for zoom level
-	// TODO: it is possible to store minSize of a point to optimize neede level calc
-	function lod (box, maxLevel) {
-		let offsets = []
-
-		let lox = box.x, loy = box.y, hix = lox + box.width, hiy = loy + box.height
-
-		let diam = Math.max(bounds[2] - bounds[0], bounds[3] - bounds[1])
-
-		for (let level = 0; level < maxLevel; level++) {
-			let levelGroups = groups[level]
-			// let levelPixelSize = diam * Math.pow(0.5, level)
-
-			// if (levelPixelSize && levelPixelSize < pxSize) {
-			// 	continue
-			// }
-
-			let levelGroupStart = group(lox, loy, level)
-			let levelGroupEnd = group(hix, hiy, level)
-
-			// FIXME: utilize sublevels to speed up search range here
-			let startOffset = search.ge(levelGroups, levelGroupStart)
-			let endOffset = search.le(levelGroups, levelGroupEnd, startOffset, levelGroups.length - 1) + 1
-
-			offsets[level] = [startOffset, endOffset]
-		}
-
-		return offsets
-	}
-
 
 	// return reordered ids with provided methods
+	// save level offsets in output buffer
 	let offset = 0
 	for (let level = 0; level < levels.length; level++) {
 		ids.set(levels[level], offset)
-		offset += levels[level].length
+		let nextOffset = offset + levels[level].length
+		levels[level] = [offset, nextOffset]
+		offset = nextOffset
 	}
 
 	ids.levels = levels
@@ -276,8 +265,8 @@ function normalize (pts, bounds) {
 	let result = new Array(pts.length)
 
 	for (let i = 0, n = pts.length / 2; i < n; i++) {
-		result[2*i] = (pts[2*i] - lox) * scaleX
-		result[2*i+1] = (pts[2*i+1] - loy) * scaleY
+		result[2*i] = clamp((pts[2*i] - lox) * scaleX, 0, 1)
+		result[2*i+1] = clamp((pts[2*i+1] - loy) * scaleY, 0, 1)
 	}
 
 	return result
