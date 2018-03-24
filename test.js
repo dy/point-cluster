@@ -9,12 +9,6 @@ t('quad: offsets case', t => {
   let points = [.15,.8, .2,.15, .6,.6, .6,.45, .8,.1, .9,.6, .91,.61]
   let index = cluster(points, {bounds: [0,0,1,1]})
 
-  t.deepEqual(index.levels, [
-    [0],
-    [1,3,2],
-    [4,5],
-    [6]
-  ])
 
   t.deepEqual(index.subarray(), [0, 1,3,2, 4,5, 6])
 
@@ -37,7 +31,7 @@ t('quad: lod method', t => {
   let points = [0,0, 1,1, 2,2, 3,3, 4,4, 5,5, 6,6, 7,7]
 
   let index = cluster(points)
-  t.deepEqual(index.range({lod: true}), [[0,1], [0,2], [0,3], [0,2]])
+  t.deepEqual(index.range({lod: true}), [[0,1], [1,3], [3,6], [6,8]])
 
   t.end()
 })
