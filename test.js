@@ -36,6 +36,20 @@ t('quad: lod method', t => {
   t.end()
 })
 
+t('quad: selection', t => {
+  let points = [0,0, 1,1, 2,2, 3,3, 4,4, 5,5, 6,6, 7,7]
+
+  let index = cluster(points)
+
+  t.deepEqual(index.range(), [0, 1, 2, 3, 4, 5, 6, 7])
+  t.deepEqual(index.range(1,1,6,6), [1, 2, 3, 4, 5, 6])
+  t.deepEqual(index.range(2,1,5,6), [2, 3, 4, 5])
+  t.deepEqual(index.range(1,2,6,5), [2, 3, 4, 5])
+  t.deepEqual(index.range(1,3,5,6), [3, 4, 5])
+
+  t.end()
+})
+
 t.skip('quad: snap-points-2d cases', t => {
   function verifySnap(srcPoints) {
     let numPoints = srcPoints.length>>>1

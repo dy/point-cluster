@@ -15,6 +15,7 @@ const defined = require('defined')
 const flatten = require('flatten-vertex-data')
 const isObj = require('is-obj')
 
+
 module.exports = function cluster (srcPoints, options) {
 	if (!options) options = {}
 
@@ -52,9 +53,29 @@ module.exports = function cluster (srcPoints, options) {
 	// unique group ids, sorted in z-curve fashion within levels
 	let groups = []
 
+	// level offsets in `ids`
+	let offsets = []
+
 
 	// sort points
 	sort(0, 0, 1, ids, 0, 1)
+
+
+	// return reordered ids with provided methods
+	// save level offsets in output buffer
+	let offset = 0
+	for (let level = 0; level < levels.length; level++) {
+		ids.set(levels[level], offset)
+		let nextOffset = offset + levels[level].length
+		offsets[level] = [offset, nextOffset]
+		offset = nextOffset
+	}
+
+	ids.range = range
+
+	return ids
+
+
 
 	// FIXME: it is possible to create one typed array heap and reuse that to avoid memory blow
 	function sort (x, y, diam, ids, level, group) {
@@ -64,7 +85,7 @@ module.exports = function cluster (srcPoints, options) {
 		let levelItems = levels[level] || (levels[level] = [])
 		let levelGroups = groups[level] || (groups[level] = [])
 		let sublevel = sublevels[level] || (sublevels[level] = [])
-		let offset = levelItems.length - 1
+		let offset = levelItems.length
 
 		level++
 
@@ -139,7 +160,8 @@ module.exports = function cluster (srcPoints, options) {
 
 		let box = rect( ...args )
 
-		let [minX, minY, maxX, maxY] = normalize( [ box.x, box.y, box.x + box.width, box.y + box.height ], bounds )
+		let [minX, minY, maxX, maxY] = [ box.x, box.y, box.x + box.width, box.y + box.height ]
+		let [nminX, nminY, nmaxX, nmaxY] = normalize([minX, minY, maxX, maxY], bounds )
 
 		let maxLevel = defined(options.level, levels.length)
 
@@ -157,40 +179,66 @@ module.exports = function cluster (srcPoints, options) {
 		}
 
 		// return levels of details
-		if (options.lod) return lod(minX, minY, maxX, maxY, maxLevel)
+		if (options.lod) return lod(nminX, nminY, nmaxX, nmaxY, maxLevel)
 
+
+
+		// do selection ids
 		let selection = []
 
-		select( 0, 0, 1, 0, 0 )
+		// FIXME: probably we can do LOD here beforehead
+		select( 0, 0, 1, 0, 0, 1)
 
-		function select ( lox, loy, d, level, offset ) {
+		function select ( lox, loy, d, level, from, to ) {
+			if (from === null || to === null) return
+
 			let hix = lox + d
 			let hiy = loy + d
 
 			// if box does not intersect level - ignore
-			if ( minX > hix || minY > hiy || maxX < lox || maxY < loy ) return
+			if ( nminX > hix || nminY > hiy || nmaxX < lox || nmaxY < loy ) return
 			if ( level >= maxLevel ) return
+			if ( from === to ) return
 
-			// if point falls into box range - take it
-			let id = ids[levels[level][0]]
-			let px = points[ id * 2 ]
-			let py = points[ id * 2 + 1 ]
+			// if points fall into box range - take it
+			let levelItems = levels[level]
 
-			if ( px > minX && px < maxX && py > minY && py < maxY ) selection.push(id)
+			if (to === undefined) to = levelItems.length
+
+			for (let i = from; i < to; i++) {
+				let id = levelItems[i]
+
+				let px = srcPoints[ id * 2 ]
+				let py = srcPoints[ id * 2 + 1 ]
+
+				if ( px >= minX && px <= maxX && py >= minY && py <= maxY ) {selection.push(id)
+				}
+			}
 
 			// for every subsection do select
-			let offsets = sublevels[level]
-			let off0 = offsets[ offset * 4 + 0 ]
-			let off1 = offsets[ offset * 4 + 1 ]
-			let off2 = offsets[ offset * 4 + 2 ]
-			let off3 = offsets[ offset * 4 + 3 ]
+			let offsets = sublevels[ level ]
+			let off0 = offsets[ from * 4 + 0 ]
+			let off1 = offsets[ from * 4 + 1 ]
+			let off2 = offsets[ from * 4 + 2 ]
+			let off3 = offsets[ from * 4 + 3 ]
+			let end = nextOffset(offsets, from + 1)
 
 			let d2 = d * .5
 			let nextLevel = level + 1
-			if ( off0 != null ) select( lox, loy, d2, nextLevel, off0)
-			if ( off1 != null ) select( lox, loy + d2, d2, nextLevel, off1)
-			if ( off2 != null ) select( lox + d2, loy, d2, nextLevel, off2)
-			if ( off3 != null ) select( lox + d2, loy + d2, d2, nextLevel, off3)
+			select( lox, loy, d2, nextLevel, off0, off1 || off2 || off3 || end)
+			select( lox, loy + d2, d2, nextLevel, off1, off2 || off3 || end)
+			select( lox + d2, loy, d2, nextLevel, off2, off3 || end)
+			select( lox + d2, loy + d2, d2, nextLevel, off3, end)
+		}
+
+		function nextOffset(offsets, from) {
+			let offset = null, i = 0
+			while(offset === null) {
+				offset = offsets[ from * 4 + i ]
+				i++
+				if (i > offsets.length) return null
+			}
+			return offset
 		}
 
 		return selection
@@ -199,11 +247,11 @@ module.exports = function cluster (srcPoints, options) {
 	// get range offsets within levels to render lods appropriate for zoom level
 	// TODO: it is possible to store minSize of a point to optimize neede level calc
 	function lod (lox, loy, hix, hiy, maxLevel) {
-		let offsets = []
+		let ranges = []
 
 		for (let level = 0; level < maxLevel; level++) {
 			let levelGroups = groups[level]
-			let [from, to] = levels[level]
+			let from = offsets[level][0]
 
 			let levelGroupStart = group(lox, loy, level)
 			let levelGroupEnd = group(hix, hiy, level)
@@ -212,10 +260,10 @@ module.exports = function cluster (srcPoints, options) {
 			let startOffset = search.ge(levelGroups, levelGroupStart)
 			let endOffset = search.gt(levelGroups, levelGroupEnd, startOffset, levelGroups.length - 1)
 
-			offsets[level] = [startOffset + from, endOffset + from]
+			ranges[level] = [startOffset + from, endOffset + from]
 		}
 
-		return offsets
+		return ranges
 	}
 
 	// get group id closest to the x,y coordinate, corresponding to a level
@@ -238,22 +286,6 @@ module.exports = function cluster (srcPoints, options) {
 
 		return group
 	}
-
-
-	// return reordered ids with provided methods
-	// save level offsets in output buffer
-	let offset = 0
-	for (let level = 0; level < levels.length; level++) {
-		ids.set(levels[level], offset)
-		let nextOffset = offset + levels[level].length
-		levels[level] = [offset, nextOffset]
-		offset = nextOffset
-	}
-
-	ids.levels = levels
-	ids.range = range
-
-	return ids
 }
 
 
