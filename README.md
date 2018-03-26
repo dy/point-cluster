@@ -43,6 +43,7 @@ Option | Default | Description
 ---|---|---
 `bounds` | `'auto'` | Data range, if different from `points` bounds, eg. in case of subdata.
 `depth` | `256` | Max number of levels. Points below the indicated level are grouped into single level.
+`output` | `'array'` | Output data array or data format. For available formats see [dtype](https://npmjs.org/package/dtype).
 <!-- `node` | `1` | Min size of node, ie. tree traversal is stopped once the node contains less than the indicated number of points. -->
 <!-- `sort` | `'z'` | Sort values within levels by `x`-, `y`-coordinate, `z`-curve or `r` - point radius. `z` is the fastest for init, `x` or `y` are faster for `lod` and `r` is the most data-relevant. -->
 <!-- `pick` | `'first'` | `'first'`, `'last'` or a function, returning point id for the level. -->

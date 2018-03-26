@@ -9,11 +9,22 @@ t('quad: offsets case', t => {
   let points = [.15,.8, .2,.15, .6,.6, .6,.45, .8,.1, .9,.6, .91,.61]
   let index = cluster(points, {bounds: [0,0,1,1]})
 
-
-  t.deepEqual(index.subarray(), [0, 1,3,2, 4,5, 6])
+  t.deepEqual(index.slice(), [0, 1,3,2, 4,5, 6])
 
   t.end()
 })
+
+t('quad: output container', t => {
+  let points = [.15,.8, .2,.15, .6,.6, .6,.45, .8,.1, .9,.6, .91,.61]
+  let arr = []
+  let index = cluster(points, {bounds: [0,0,1,1], output: arr})
+
+  t.deepEqual(arr.slice(), [0, 1,3,2, 4,5, 6])
+  t.equal(index, arr)
+
+  t.end()
+})
+
 
 t('quad: max depth', t => {
   let points = []

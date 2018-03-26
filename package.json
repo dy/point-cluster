@@ -45,6 +45,7 @@
     "binary-search-bounds": "^2.0.4",
     "bubleify": "^1.1.0",
     "clamp": "^1.0.1",
+    "dtype": "^2.0.0",
     "flatten-vertex-data": "^1.0.0",
     "is-obj": "^1.0.1",
     "parse-rect": "^1.2.0"

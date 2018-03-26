@@ -14,6 +14,7 @@ const pick = require('pick-by-alias')
 const defined = require('defined')
 const flatten = require('flatten-vertex-data')
 const isObj = require('is-obj')
+const dtype = require('dtype')
 
 
 module.exports = function cluster (srcPoints, options) {
@@ -24,6 +25,7 @@ module.exports = function cluster (srcPoints, options) {
 	options = pick(options, {
 		bounds: 'range bounds dataBox databox',
 		maxDepth: 'depth maxDepth maxdepth level maxLevel maxlevel levels',
+		dtype: 'type dtype format out dst output destination'
 		// sort: 'sortBy sortby sort',
 		// pick: 'pick levelPoint',
 		// nodeSize: 'node nodeSize minNodeSize minSize size'
@@ -39,7 +41,16 @@ module.exports = function cluster (srcPoints, options) {
 
 	// init variables
 	let n = srcPoints.length >>> 1
-	let ids = new Uint32Array(n)
+	let ids
+	if (!options.dtype) options.dtype = 'array'
+
+	if (typeof options.dtype === 'string') {
+		ids = new (dtype(options.dtype))(n)
+	}
+	else if (options.dtype) {
+		ids = options.dtype
+		if (Array.isArray(ids)) ids.length = n
+	}
 	for (let i = 0; i < n; ++i) {
 		ids[i] = i
 	}
@@ -65,7 +76,13 @@ module.exports = function cluster (srcPoints, options) {
 	// save level offsets in output buffer
 	let offset = 0
 	for (let level = 0; level < levels.length; level++) {
-		ids.set(levels[level], offset)
+		let levelItems = levels[level]
+		if (ids.set) ids.set(levelItems, offset)
+		else {
+			for (let i = 0, l = levelItems.length; i < l; i++) {
+				ids[i + offset] = levelItems[i]
+			}
+		}
 		let nextOffset = offset + levels[level].length
 		offsets[level] = [offset, nextOffset]
 		offset = nextOffset
