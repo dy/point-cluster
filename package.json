@@ -48,6 +48,7 @@
     "dtype": "^2.0.0",
     "flatten-vertex-data": "^1.0.0",
     "is-obj": "^1.0.1",
+    "math-log2": "^1.0.1",
     "parse-rect": "^1.2.0"
   },
   "devDependencies": {

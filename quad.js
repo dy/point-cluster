@@ -15,6 +15,7 @@ const defined = require('defined')
 const flatten = require('flatten-vertex-data')
 const isObj = require('is-obj')
 const dtype = require('dtype')
+const log2 = require('math-log2')
 
 
 module.exports = function cluster (srcPoints, options) {
@@ -195,8 +196,8 @@ module.exports = function cluster (srcPoints, options) {
 			else if (options.d.length) d = options.d
 
 			maxLevel = Math.min(
-				Math.ceil(-Math.log2(Math.abs(d[0]) / (bounds[2] - bounds[0]))),
-				Math.ceil(-Math.log2(Math.abs(d[1]) / (bounds[3] - bounds[1]))),
+				Math.ceil(-log2(Math.abs(d[0]) / (bounds[2] - bounds[0]))),
+				Math.ceil(-log2(Math.abs(d[1]) / (bounds[3] - bounds[1]))),
 				maxLevel
 			)
 		}
