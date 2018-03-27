@@ -42,7 +42,9 @@ t('quad: lod method', t => {
   let points = [0,0, 1,1, 2,2, 3,3, 4,4, 5,5, 6,6, 7,7]
 
   let index = cluster(points)
+
   t.deepEqual(index.range({lod: true}), [[0,1], [1,3], [3,6], [6,8]])
+  t.deepEqual(index.range([1,6], {lod: true}), [[0,1], [1,2], [3,4], [6,7]])
 
   t.end()
 })
@@ -57,6 +59,8 @@ t('quad: selection', t => {
   t.deepEqual(index.range(2,1,5,6), [2, 3, 4, 5])
   t.deepEqual(index.range(1,2,6,5), [2, 3, 4, 5])
   t.deepEqual(index.range(1,3,5,6), [3, 4, 5])
+
+  t.deepEqual(index.range(5,6,1,3), [3, 4, 5])
 
   t.end()
 })

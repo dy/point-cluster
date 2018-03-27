@@ -177,7 +177,13 @@ module.exports = function cluster (srcPoints, options) {
 
 		let box = rect( ...args )
 
-		let [minX, minY, maxX, maxY] = [ box.x, box.y, box.x + box.width, box.y + box.height ]
+		let [minX, minY, maxX, maxY] = [
+			Math.min(box.x, box.x + box.width),
+			Math.min(box.y, box.y + box.height),
+			Math.max(box.x, box.x + box.width),
+			Math.max(box.y, box.y + box.height)
+		]
+
 		let [nminX, nminY, nmaxX, nmaxY] = normalize([minX, minY, maxX, maxY], bounds )
 
 		let maxLevel = defined(options.level, levels.length)
@@ -189,14 +195,16 @@ module.exports = function cluster (srcPoints, options) {
 			else if (options.d.length) d = options.d
 
 			maxLevel = Math.min(
-				Math.ceil(-Math.log2(d[0] / (bounds[2] - bounds[0]))),
-				Math.ceil(-Math.log2(d[1] / (bounds[3] - bounds[1]))),
+				Math.ceil(-Math.log2(Math.abs(d[0]) / (bounds[2] - bounds[0]))),
+				Math.ceil(-Math.log2(Math.abs(d[1]) / (bounds[3] - bounds[1]))),
 				maxLevel
 			)
 		}
 
 		// return levels of details
-		if (options.lod) return lod(nminX, nminY, nmaxX, nmaxY, maxLevel)
+		if (options.lod) {
+			return lod(nminX, nminY, nmaxX, nmaxY, maxLevel)
+		}
 
 
 
