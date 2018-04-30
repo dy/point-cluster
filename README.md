@@ -1,4 +1,4 @@
-# point-cluster [![Build Status](https://travis-ci.org/dfcreative/point-cluster.svg?branch=master)](https://travis-ci.org/dfcreative/point-cluster) [![experimental](https://img.shields.io/badge/stability-experimental-yellow.svg)](http://github.com/badges/stability-badges)
+# point-cluster [![Build Status](https://travis-ci.org/dy/point-cluster.svg?branch=master)](https://travis-ci.org/dy/point-cluster) [![experimental](https://img.shields.io/badge/stability-experimental-yellow.svg)](http://github.com/badges/stability-badges)
 
 Point clustering for 2D spatial indexing. Incorporates optimized quad-tree data structure.
 
@@ -13,7 +13,7 @@ Point clustering for 2D spatial indexing. Incorporates optimized quad-tree data 
 * [x] high performance (faster than [snap-points-2d](https://github.com/gl-vis/snap-points-2d)).
 * [x] no memory overuse.
 
-[DEMO](https://github.com/dfcreative/point-cluster)
+[DEMO](https://github.com/dy/point-cluster)
 -->
 
 
@@ -55,13 +55,13 @@ Option | Default | Description
 
 Get point ids from the indicated range.
 
-* `box` can be any rectangle object, eg. `[l, t, r, b]`, see [parse-rect](https://github.com/dfcreative/parse-rect).
+* `box` can be any rectangle object, eg. `[l, t, r, b]`, see [parse-rect](https://github.com/dy/parse-rect).
 * `options`
 
 Option | Default | Description
 ---|---|---
 `lod` | `false` | Makes result a list of level details instead of ids, useful for obtaining subranges to render.
-`d` | `0` | Min pixel size (number or `[width, height]` couple) to search for, to ignore lower levels.
+`px` | `0` | Min pixel size in data dimension (number or `[width, height]` couple) to search for, to ignore lower levels.
 `level` | `null` | Max level to limit search.
 
 ```js
@@ -77,7 +77,7 @@ levels.forEach([from, to] => {
 ### Related
 
 * [snap-points-2d](https://github.com/gl-vis/snap-points-2d) − grouping points by pixels.
-* [kdgrass](https://github.com/dfcreative/kdgrass) − minimal kd-tree implementation.
+* [kdgrass](https://github.com/dy/kdgrass) − minimal kd-tree implementation.
 * [regl-scatter2d](https://github.com/dfreative/regl-scatter2d) − highly performant scatter2d plot.
 
 

@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/dfcreative/point-cluster.git"
+    "url": "git://github.com/dy/point-cluster.git"
   },
   "keywords": [
     "snap-points-2d",

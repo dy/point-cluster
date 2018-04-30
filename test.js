@@ -4,7 +4,6 @@ const t = require('tape')
 const cluster = require('./')
 const approxEqual = require('almost-equal')
 
-
 t('quad: offsets case', t => {
   let points = [.15,.8, .2,.15, .6,.6, .6,.45, .8,.1, .9,.6, .91,.61]
   let index = cluster(points, {bounds: [0,0,1,1]})

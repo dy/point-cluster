@@ -5,3 +5,4 @@ tmp
 *.log
 dist/
 demo
+package-lock.json
