@@ -195,12 +195,15 @@ module.exports = function cluster (srcPoints, options) {
 			if (typeof options.d === 'number') d = [options.d, options.d]
 			else if (options.d.length) d = options.d
 
-			maxLevel = Math.max(
-				Math.ceil(-log2(Math.abs(d[0]) / (bounds[2] - bounds[0]))),
-				Math.ceil(-log2(Math.abs(d[1]) / (bounds[3] - bounds[1]))),
+			maxLevel = Math.min(
+				Math.max(
+					Math.ceil(-log2(Math.abs(d[0]) / (bounds[2] - bounds[0]))),
+					Math.ceil(-log2(Math.abs(d[1]) / (bounds[3] - bounds[1])))
+				),
 				maxLevel
 			)
 		}
+		maxLevel = Math.min(maxLevel, levels.length)
 
 		// return levels of details
 		if (options.lod) {
