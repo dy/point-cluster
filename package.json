@@ -1,6 +1,6 @@
 {
   "name": "point-cluster",
-  "version": "3.1.5",
+  "version": "3.1.6",
   "description": "Fast nd point clustering.",
   "main": "index.js",
   "scripts": {
